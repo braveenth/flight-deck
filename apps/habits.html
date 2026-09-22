@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Habit Reactor — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .hrow{
+    display:grid;grid-template-columns:auto 1fr auto;gap:13px;align-items:center;padding:14px;
+    border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel2);transition:.15s
+  }
+  .hrow+.hrow{margin-top:9px}
+  .hrow:hover{border-color:var(--line2)}
+  .hrow.done{background:color-mix(in srgb,var(--good) 8%,var(--panel2));border-color:color-mix(in srgb,var(--good) 30%,var(--line))}
+  .hbox{
+    width:30px;height:30px;border-radius:9px;border:2px solid var(--line2);background:transparent;
+    cursor:pointer;display:grid;place-items:center;font-size:15px;color:transparent;transition:.15s;flex:none
+  }
+  .hrow.done .hbox{background:var(--good);border-color:var(--good);color:#04140d}
+  .hbox:hover{border-color:var(--good);transform:scale(1.06)}
+  .hname{font-weight:850;font-size:14.5px;letter-spacing:-.01em}
+  .hcue{color:var(--muted);font-size:12px;margin-top:3px;line-height:1.4}
+  .hmeta{text-align:right;font-size:11px;color:var(--muted);white-space:nowrap}
+  .hmeta .st{font-weight:900;color:var(--text);font-size:14px}
+  .mini{display:flex;gap:2px;margin-top:6px;justify-content:flex-end}
+  .mini i{width:7px;height:7px;border-radius:2px;background:var(--line);display:block}
+  .mini i.on{background:var(--good)}
+  .mini i.frz{background:var(--accent)}
+  .auto{margin-top:9px}
+  .autolab{display:flex;justify-content:space-between;font-size:10px;color:var(--faint);margin-bottom:4px;letter-spacing:.08em;text-transform:uppercase;font-weight:800}
+  .editor{display:none;margin-top:12px}
+  .editor.open{display:block;animation:fdpop .2s}
+  @media(max-width:640px){.hrow{grid-template-columns:auto 1fr}.hmeta{grid-column:2;text-align:left}.mini{justify-content:flex-start}}
+</style>
+</head>
+<body data-root=".." data-module="habits">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker">⚙️ Daily · the compounding layer</div>
+    <h1>Habit Reactor</h1>
+    <div class="lede">A habit is a behaviour that a context triggers without you deciding. Until then it costs willpower
+      every single time — so the job is to survive long enough for the context to take over.</div>
+  </div>
+
+  <div class="cols c4">
+    <div class="stat"><div class="n" id="kDone">0<span class="muted" style="font-size:16px">/0</span></div><div class="l">Done today</div><div class="bar thin good" style="margin-top:9px"><i id="kBar"></i></div></div>
+    <div class="stat"><div class="n" id="kPerf">0</div><div class="l">Perfect days</div><div class="sm">All habits checked</div></div>
+    <div class="stat"><div class="n" id="k30">0%</div><div class="l">30-day consistency</div><div class="sm" id="k30s">—</div></div>
+    <div class="stat"><div class="n" id="kAuto">0</div><div class="l">Past 66 days</div><div class="sm">Likely automatic</div></div>
+  </div>
+
+  <div class="note warn" id="miss2" style="display:none;margin-top:16px">
+    <b>Never miss twice.</b> Missing one day doesn't measurably slow habit formation. Missing two in a row is how
+    habits die. The habits below in amber are on their second day — do the smallest possible version right now.
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card">
+        <div class="row" style="margin-bottom:14px">
+          <div>
+            <div class="kicker" style="margin:0">Today</div>
+            <h2 style="margin:4px 0 0">Check them off</h2>
+          </div>
+          <button class="btn sm right" onclick="toggleEditor()">+ New habit</button>
+        </div>
+
+        <div class="editor" id="editor">
+          <div class="field"><label>Habit — small enough that a bad day can't stop it</label>
+            <input type="text" id="eName" placeholder="Read 10 pages"/></div>
+          <div class="field"><label>Anchor — what already happens reliably?</label>
+            <input type="text" id="eAnchor" placeholder="After I pour my morning coffee"/></div>
+          <div class="field"><label>Location — where, exactly</label>
+            <input type="text" id="eWhere" placeholder="at the kitchen table"/></div>
+          <div class="btnrow grid2" style="margin-top:13px">
+            <button class="btn primary" onclick="saveHabit()">Save habit</button>
+            <button class="btn ghost" onclick="toggleEditor()">Cancel</button>
+          </div>
+          <div class="note acc" style="margin-top:13px">
+            <b>Stack it onto something that already happens.</b> Habits are cued by context, not by motivation —
+            an existing routine is the most reliable cue you own.
+            <div class="cite"><b>Wood &amp; Neal (2007), <i>Psychological Review</i> 114(4):843–863.</b></div>
+          </div>
+          <hr class="hr"/>
+        </div>
+
+        <div id="list"></div>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">The number that matters</div>
+        <h2>66 days, not 21</h2>
+        <p class="sub" style="margin-bottom:0">The “21 days to a habit” line has no research behind it. When it was
+          actually measured — 96 people, one new daily behaviour each, tracked to automaticity — the median was
+          <b>66 days</b>, and the range ran from 18 to 254. Simple behaviours (drinking water) automated fast;
+          complex ones (50 sit-ups) took far longer.</p>
+        <div class="note acc" style="margin-top:14px">
+          The same study found that <b>missing a single day had no measurable effect</b> on the eventual automaticity
+          curve. That's the entire justification for the never-miss-twice rule — and for the streak freeze this app
+          gives you every seven days.
+          <div class="cite"><b>Lally, van Jaarsveld, Potts &amp; Wardle (2010), <i>European Journal of Social
+          Psychology</i> 40(6):998–1009.</b></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Design rule</div>
+        <h2>Shrink until it's stupid</h2>
+        <p class="sub">If you've missed a habit three times, it's too big. Cut it in half. A habit you do badly every
+          day beats a habit you do perfectly twice a month, because you're training the trigger, not the performance.</p>
+        <div class="note">
+          <b>Ten pages, not a chapter. Two minutes, not thirty.</b> Raise the bar only after the trigger fires by itself.
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Last 30 days</div>
+        <h2>Per-habit consistency</h2>
+        <div id="table"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const M='habits';
+const SEED=[
+  {name:'Daylight within 30 min of waking', anchor:'After I get out of bed', where:'outside the front door'},
+  {name:'Read 10 pages',                    anchor:'After I pour my coffee', where:'at the kitchen table'},
+  {name:'One study flight (25 min min.)',   anchor:'After lunch',            where:'at my desk'},
+  {name:'Clear the recall queue',           anchor:'After my study flight',  where:'at my desk'},
+  {name:'Move for 30 minutes',              anchor:'After I close my laptop',where:'outside or the gym'},
+  {name:'Phone out of the bedroom',         anchor:'After I brush my teeth', where:'charging in the kitchen'}
+];
+function habits(){
+  let s=FD.read();
+  if(!s.habits){
+    FD.mutate(x=>{ x.habits=SEED.map(h=>Object.assign({id:FD.uid(),created:FD.key()},h)); });
+    s=FD.read();
+  }
+  return (s.habits||[]).filter(h=>!h.archived);
+}
+function doneMap(k){ return FD.mod(M,k).done||{}; }
+function didOn(id,k){ return !!doneMap(k)[id]; }
+
+function habitStreak(id){
+  let n=0,k=FD.key();
+  if(!didOn(id,k)) k=FD.shift(k,-1);
+  while(didOn(id,k)){ n++; k=FD.shift(k,-1); }
+  return n;
+}
+function daysSince(h){ return FD.diff(h.created||FD.key(),FD.key())+1; }
+function hitsIn(id,n){ return FD.lastDays(n).filter(k=>didOn(id,k)).length; }
+function missedTwice(id){
+  const y=FD.shift(FD.key(),-1), y2=FD.shift(FD.key(),-2);
+  return !didOn(id,y)&&!didOn(id,FD.key())&&didOn(id,y2)===false&&FD.diff(FD.read().created,y2)>=0;
+}
+function onSecondDay(id){
+  const y=FD.shift(FD.key(),-1);
+  return !didOn(id,y)&&!didOn(id,FD.key());
+}
+
+function toggleHabit(id){
+  const d=Object.assign({},doneMap());
+  const was=!!d[id];
+  if(was) delete d[id]; else d[id]=true;
+  FD.setMod(M,{done:d});
+  if(!was) FD.addXP(5,'Habit done');
+  const hs=habits(), now=doneMap();
+  if(hs.length && hs.every(h=>now[h.id]) && !FD.mod(M).perfect){
+    FD.setMod(M,{perfect:true}); FD.addXP(25,'Perfect habit day'); FD.confetti(36); FD.chime();
+  }
+  paint();
+}
+function toggleEditor(){ document.getElementById('editor').classList.toggle('open'); document.getElementById('eName').focus(); }
+function saveHabit(){
+  const name=document.getElementById('eName').value.trim();
+  if(!name){ FD.toast('⚠️ Give it a name'); return; }
+  FD.mutate(s=>{
+    s.habits=s.habits||[];
+    s.habits.push({id:FD.uid(),name,anchor:document.getElementById('eAnchor').value.trim(),
+                   where:document.getElementById('eWhere').value.trim(),created:FD.key()});
+  });
+  ['eName','eAnchor','eWhere'].forEach(i=>document.getElementById(i).value='');
+  toggleEditor(); FD.addXP(6,'New habit defined'); paint();
+}
+function delHabit(id){
+  if(!confirm('Remove this habit? Its history stays in your data.')) return;
+  FD.mutate(s=>{ const h=(s.habits||[]).find(x=>x.id===id); if(h) h.archived=true; });
+  paint();
+}
+
+function paint(){
+  const hs=habits(), done=doneMap();
+  const nDone=hs.filter(h=>done[h.id]).length;
+  document.getElementById('kDone').innerHTML=nDone+'<span class="muted" style="font-size:16px">/'+hs.length+'</span>';
+  document.getElementById('kBar').style.width=FD.pct(nDone,hs.length)+'%';
+
+  let perfect=0;
+  FD.lastDays(120).forEach(k=>{
+    const dm=FD.mod(M,k).done||{};
+    if(hs.length&&hs.every(h=>dm[h.id])) perfect++;
+  });
+  document.getElementById('kPerf').textContent=perfect;
+
+  const tot=hs.reduce((a,h)=>a+hitsIn(h.id,30),0);
+  document.getElementById('k30').textContent=FD.pct(tot,hs.length*30)+'%';
+  document.getElementById('k30s').textContent=tot+' of '+(hs.length*30)+' possible';
+  document.getElementById('kAuto').textContent=hs.filter(h=>daysSince(h)>=66&&hitsIn(h.id,30)>=24).length;
+
+  document.getElementById('miss2').style.display=hs.some(h=>onSecondDay(h.id))?'block':'none';
+
+  document.getElementById('list').innerHTML = hs.length ? hs.map(h=>{
+    const on=!!done[h.id], st=habitStreak(h.id), age=daysSince(h);
+    const autoPct=FD.pct(Math.min(66,hitsIn(h.id,Math.min(age,120))),66);
+    const warn=!on&&onSecondDay(h.id);
+    const mini=FD.lastDays(21).map(k=>'<i class="'+(didOn(h.id,k)?'on':'')+'"></i>').join('');
+    return '<div class="hrow'+(on?' done':'')+'"'+(warn?' style="border-color:color-mix(in srgb,var(--warn) 45%,var(--line))"':'')+'>'+
+      '<button class="hbox" onclick="toggleHabit(\''+h.id+'\')" aria-label="toggle">✓</button>'+
+      '<div><div class="hname">'+FD.esc(h.name)+(warn?' <span class="pill due">day 2 — do a tiny version</span>':'')+'</div>'+
+        (h.anchor?'<div class="hcue">'+FD.esc(h.anchor)+(h.where?', '+FD.esc(h.where):'')+', I will '+FD.esc(h.name.toLowerCase())+'.</div>':'')+
+        '<div class="auto"><div class="autolab"><span>Automaticity runway</span><span>'+Math.min(66,hitsIn(h.id,120))+' / 66 reps</span></div>'+
+        '<div class="bar thin"><i style="width:'+autoPct+'%"></i></div></div>'+
+      '</div>'+
+      '<div class="hmeta"><div class="st">🔥 '+st+'</div><div>'+hitsIn(h.id,7)+'/7 this week</div>'+
+        '<div class="mini">'+mini+'</div>'+
+        '<button class="del" style="margin-top:4px" onclick="delHabit(\''+h.id+'\')">✕</button></div>'+
+    '</div>';
+  }).join('') : '<div class="empty">No habits yet. Add one above — start with two, not ten.</div>';
+
+  document.getElementById('table').innerHTML= hs.length
+    ? '<div class="scrollx"><table class="tbl"><tr><th>Habit</th><th>30d</th><th>Streak</th><th>Age</th></tr>'+
+      hs.map(h=>'<tr><td>'+FD.esc(h.name)+'</td><td class="mono">'+FD.pct(hitsIn(h.id,30),30)+'%</td>'+
+        '<td class="mono">'+habitStreak(h.id)+'</td><td class="mono">'+daysSince(h)+'d</td></tr>').join('')+
+      '</table></div>'
+    : '<div class="empty">—</div>';
+}
+paint();
+</script>
+</body>
+</html>

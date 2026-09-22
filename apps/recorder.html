@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Flight Recorder — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .chart{width:100%;height:150px;display:block;overflow:visible}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:9px;font-weight:800}
+  .legend i{display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .rec{display:flex;align-items:baseline;gap:10px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .rec:last-child{border:0}
+  .rec .l{font-size:12.5px;color:var(--muted);flex:1}
+  .rec .v{font-size:19px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .heatwrap{overflow-x:auto;padding-bottom:6px}
+  .months{display:flex;font-size:9.5px;color:var(--faint);font-weight:800;letter-spacing:.1em;margin-bottom:5px}
+  .danger-zone{border-color:color-mix(in srgb,var(--danger) 34%,var(--line))}
+</style>
+</head>
+<body data-root=".." data-module="recorder">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker">📈 Anytime · the honest record</div>
+    <h1>Flight Recorder</h1>
+    <div class="lede">Everything the system has logged, without interpretation. Come here when you feel like nothing
+      is working — the record is usually kinder than the memory, and occasionally it isn't, which is also useful.</div>
+  </div>
+
+  <div class="cols c4">
+    <div class="stat"><div class="n" id="kLvl">1</div><div class="l" id="kRank">Cadet</div>
+      <div class="bar thin" style="margin-top:9px"><i id="kLvlBar"></i></div><div class="sm" id="kNext">—</div></div>
+    <div class="stat"><div class="n" id="kXp">0</div><div class="l">Total XP</div><div class="sm" id="kAvg">—</div></div>
+    <div class="stat"><div class="n" id="kStreak">0</div><div class="l">Current streak</div><div class="sm" id="kBest">Best —</div></div>
+    <div class="stat"><div class="n" id="kActive">0</div><div class="l">Active days</div><div class="sm" id="kRate">—</div></div>
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card">
+        <div class="kicker">Consistency</div>
+        <h2>Every day of the program</h2>
+        <div class="heatwrap"><div class="months" id="months"></div><div class="heat" id="heat"></div></div>
+        <div class="legend"><span>Each column is a week · outlined square is today</span>
+          <span class="right" id="heatSum"></span></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Trend</div>
+        <h2>Daily XP</h2>
+        <svg class="chart" id="chXp" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Daily XP</span>
+          <span><i style="background:var(--accent2)"></i>7-day average</span></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Trend</div>
+        <h2>Focused minutes per week</h2>
+        <svg class="chart" id="chMin" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+        <div class="legend"><span id="minSum"></span></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Trend</div>
+        <h2>Sleep and how the day felt</h2>
+        <svg class="chart" id="chSleep" viewBox="0 0 600 150" preserveAspectRatio="none"></svg>
+        <div class="legend"><span><i style="background:var(--accent)"></i>Sleep (hours)</span>
+          <span><i style="background:var(--warn)"></i>Day rating (1–10)</span>
+          <span class="right" id="corr"></span></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Breakdown</div>
+        <h2>Module consistency — last 30 days</h2>
+        <div class="scrollx"><table class="tbl" id="modTable"></table></div>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">Records</div>
+        <h2>All-time</h2>
+        <div id="records"></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Levels</div>
+        <h2>Rank ladder</h2>
+        <div id="ladder"></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Data</div>
+        <h2>Backup</h2>
+        <p class="sub">All of this lives in one browser, on one machine. Clearing site data or switching browsers
+          loses it. Export on Sundays — make it part of the weekly debrief.</p>
+        <div class="btnrow grid2">
+          <button class="btn primary" onclick="FD.exportJSON()">⬇ Export JSON</button>
+          <button class="btn" onclick="document.getElementById('imp').click()">⬆ Import</button>
+        </div>
+        <input type="file" id="imp" accept="application/json" style="display:none"/>
+        <div class="tiny" style="margin-top:10px" id="size"></div>
+      </section>
+
+      <section class="card danger-zone">
+        <div class="kicker warn">Careful</div>
+        <h2>Reset</h2>
+        <p class="sub">Wipes every log, card, habit and goal. There is no undo. Export first.</p>
+        <button class="btn danger wide" onclick="wipe()">Erase all Flight Deck data</button>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const S=()=>FD.read();
+function xpOn(k){ return (S().days[k]||{}).xp||0; }
+function modOn(k,m){ return ((S().days[k]||{}).mods||{})[m]||{}; }
+
+/* ---------- charts ---------- */
+function line(svgId,series,opts){
+  opts=opts||{};
+  const svg=document.getElementById(svgId), W=600,H=150,P=6;
+  const n=Math.max(...series.map(s=>s.vals.length));
+  const max=opts.max||Math.max(1,...series.flatMap(s=>s.vals));
+  const x=i=>n>1?P+i*((W-P*2)/(n-1)):W/2;
+  const y=v=>H-P-(Math.min(v,max)/max)*(H-P*2);
+  let out='';
+  [0.25,0.5,0.75].forEach(f=>{ out+='<line x1="0" y1="'+(H-P-(H-P*2)*f)+'" x2="'+W+'" y2="'+(H-P-(H-P*2)*f)+
+    '" stroke="var(--line)" stroke-width="1" stroke-dasharray="3 4"/>'; });
+  series.forEach(s=>{
+    const pts=s.vals.map((v,i)=>x(i)+','+y(v)).join(' ');
+    if(s.fill) out+='<polygon points="'+P+','+(H-P)+' '+pts+' '+x(s.vals.length-1)+','+(H-P)+'" fill="'+s.color+'" opacity=".13"/>';
+    out+='<polyline points="'+pts+'" fill="none" stroke="'+s.color+'" stroke-width="'+(s.w||2)+
+         '" stroke-linejoin="round" stroke-linecap="round"'+(s.dash?' stroke-dasharray="4 4"':'')+'/>';
+  });
+  out+='<line x1="0" y1="'+(H-P)+'" x2="'+W+'" y2="'+(H-P)+'" stroke="var(--line2)" stroke-width="1"/>';
+  out+='<text x="4" y="14" font-size="10" fill="var(--faint)" font-family="monospace">'+Math.round(max)+'</text>';
+  svg.innerHTML=out;
+}
+function barsSvg(svgId,vals,labels,color,max){
+  const svg=document.getElementById(svgId), W=600,H=150,P=6;
+  max=max||Math.max(1,...vals);
+  const w=(W-P*2)/vals.length;
+  svg.innerHTML=vals.map((v,i)=>{
+    const h=(Math.min(v,max)/max)*(H-P*2-14);
+    return '<rect x="'+(P+i*w+w*0.14)+'" y="'+(H-P-14-h)+'" width="'+(w*0.72)+'" height="'+Math.max(1,h)+
+      '" rx="3" fill="'+(v?color:'var(--line)')+'"><title>'+labels[i]+': '+v+'</title></rect>'+
+      (vals.length<=14?'<text x="'+(P+i*w+w/2)+'" y="'+(H-2)+'" font-size="9" fill="var(--faint)" '+
+      'text-anchor="middle" font-family="monospace">'+labels[i]+'</text>':'');
+  }).join('')+'<line x1="0" y1="'+(H-P-14)+'" x2="'+W+'" y2="'+(H-P-14)+'" stroke="var(--line2)"/>';
+}
+
+/* ---------- paint ---------- */
+function paint(){
+  const s=S(), li=FD.levelInfo(), pr=FD.program();
+  document.getElementById('kLvl').textContent=li.level;
+  document.getElementById('kRank').textContent=li.rank;
+  document.getElementById('kLvlBar').style.width=li.pct+'%';
+  document.getElementById('kNext').textContent=li.need.toLocaleString()+' XP to level '+(li.level+1);
+  document.getElementById('kXp').textContent=li.xp.toLocaleString();
+  document.getElementById('kStreak').textContent=FD.streak();
+  document.getElementById('kBest').textContent='Best '+(s.records.bestStreak||0)+' days';
+
+  const all=Object.keys(s.days).filter(k=>s.days[k].xp>0);
+  document.getElementById('kActive').textContent=all.length;
+  document.getElementById('kAvg').textContent=all.length?Math.round(li.xp/all.length)+' XP per active day':'—';
+  document.getElementById('kRate').textContent=pr.dayNo?Math.round(all.length/pr.dayNo*100)+'% of days since day 1':'—';
+
+  /* heatmap */
+  const days=FD.lastDays(119), today=FD.key();
+  let hi=0;
+  document.getElementById('heat').innerHTML=days.map(k=>{
+    const xp=xpOn(k); hi=Math.max(hi,xp);
+    const l=xp===0?0:xp<40?1:xp<90?2:xp<160?3:xp<250?4:5;
+    return '<i data-l="'+l+'"'+(k===today?' data-today="1"':'')+' title="'+k+' · '+xp+' XP"></i>';
+  }).join('');
+  const mo=[]; let last='';
+  days.filter((_,i)=>i%7===0).forEach(k=>{
+    const m=FD.parseKey(k).toLocaleDateString(undefined,{month:'short'}).toUpperCase();
+    mo.push('<span style="width:14px;flex:none">'+(m!==last?m.slice(0,3):'')+'</span>'); last=m;
+  });
+  document.getElementById('months').innerHTML=mo.join('');
+  document.getElementById('heatSum').textContent='Peak day '+hi+' XP';
+
+  /* xp line + 7d avg */
+  const d60=FD.lastDays(60), xps=d60.map(xpOn);
+  const avg=xps.map((_,i)=>{ const w=xps.slice(Math.max(0,i-6),i+1); return w.reduce((a,b)=>a+b,0)/w.length; });
+  line('chXp',[{vals:xps,color:'var(--accent)',w:1.6,fill:1},{vals:avg,color:'var(--accent2)',w:2.6}]);
+
+  /* weekly minutes */
+  const wk=[],wl=[];
+  for(let i=11;i>=0;i--){
+    const st=FD.shift(FD.weekKey(),-i*7);
+    let m=0; for(let j=0;j<7;j++) m+=modOn(FD.shift(st,j),'study').minutes||0;
+    wk.push(m); wl.push(FD.parseKey(st).toLocaleDateString(undefined,{month:'numeric',day:'numeric'}));
+  }
+  barsSvg('chMin',wk,wl,'var(--good)');
+  const tot=wk.reduce((a,b)=>a+b,0);
+  document.getElementById('minSum').textContent=
+    tot?'Last 12 weeks: '+tot+' minutes ('+Math.round(tot/60)+' hours) · '+Math.round(tot/12)+' min/week average':'No focused time logged yet';
+
+  /* sleep vs mood */
+  const d30=FD.lastDays(30);
+  const sl=d30.map(k=>Number(modOn(k,'body').sleepHours)||0);
+  const md=d30.map(k=>Number(modOn(k,'debrief').rating)||0);
+  line('chSleep',[{vals:sl,color:'var(--accent)',w:2},{vals:md.map(v=>v*1.0),color:'var(--warn)',w:2}],{max:11});
+  const pairs=d30.map((k,i)=>[sl[i],md[i]]).filter(p=>p[0]&&p[1]);
+  document.getElementById('corr').textContent = pairs.length>=6
+    ? 'r = '+corr(pairs.map(p=>p[0]),pairs.map(p=>p[1])).toFixed(2)+' across '+pairs.length+' days'
+    : 'Log both for 6+ days to see a correlation';
+
+  /* module table */
+  const mods=[['preflight','Preflight',d=>d.committed],['study','Study Flight',d=>(d.minutes||0)>0],
+              ['recall','Recall Bay',d=>(d.reviewed||0)>0],['habits','Habit Reactor',d=>Object.keys(d.done||{}).length>0],
+              ['body','Airframe',d=>d.committed||d.sleepHours],['mind','Cabin Pressure',d=>(d.sessions||0)>0],
+              ['debrief','Debrief',d=>d.committed]];
+  document.getElementById('modTable').innerHTML=
+    '<tr><th>Module</th><th>Days /30</th><th>Consistency</th><th>Streak</th></tr>'+
+    mods.map(([id,nm,test])=>{
+      const hits=FD.lastDays(30).filter(k=>test(modOn(k,id))).length;
+      let st=0,k=FD.key();
+      if(!test(modOn(k,id))) k=FD.shift(k,-1);
+      while(test(modOn(k,id))){ st++; k=FD.shift(k,-1); }
+      return '<tr><td><b>'+nm+'</b></td><td class="mono">'+hits+'</td>'+
+        '<td><span class="bar thin" style="display:block;min-width:70px"><i style="width:'+FD.pct(hits,30)+'%"></i></span></td>'+
+        '<td class="mono">'+st+'</td></tr>';
+    }).join('');
+
+  /* records */
+  const cards=s.cards||[], urges=s.urges||[];
+  const R=[['Longest streak',(s.records.bestStreak||0)+' days'],
+           ['Best single day',(s.records.bestDay||0)+' XP'],
+           ['Total focused time',Math.round((s.records.totalMinutes||0)/60)+' h '+((s.records.totalMinutes||0)%60)+' m'],
+           ['Study flights flown',(s.records.totalSessions||0)],
+           ['Cards in the deck',cards.length],
+           ['Cards matured (21d+)',cards.filter(c=>(c.ivl||0)>=21).length],
+           ['Breathing minutes',(s.records.breathMinutes||0)],
+           ['Urges beaten',urges.filter(u=>u.won).length+' of '+urges.length],
+           ['If-then rules armed',(s.rules||[]).length],
+           ['Weeks reviewed',Object.values(s.weeks||{}).filter(w=>w.committed).length]];
+  document.getElementById('records').innerHTML=R.map(([l,v])=>
+    '<div class="rec"><span class="l">'+l+'</span><span class="v">'+v+'</span></div>').join('');
+
+  /* ladder */
+  let lad='';
+  for(let L=Math.max(1,li.level-2);L<=li.level+4;L++){
+    const need=FD.xpForLevel(L), on=L===li.level, done=li.xp>=need;
+    lad+='<div class="row" style="padding:8px 0;border-bottom:1px solid var(--line);'+
+      (on?'background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:8px;padding-left:8px;padding-right:8px':'')+'">'+
+      '<span style="font-weight:900;width:58px;font-size:12.5px">LVL '+L+'</span>'+
+      '<span style="font-size:12.5px;color:'+(done?'var(--text)':'var(--muted)')+'">'+FD.rankFor(L)+'</span>'+
+      '<span class="right mono tiny">'+need.toLocaleString()+' XP'+(done?' ✓':'')+'</span></div>';
+  }
+  document.getElementById('ladder').innerHTML=lad;
+
+  try{
+    const b=new Blob([JSON.stringify(s)]).size;
+    document.getElementById('size').textContent='Current data: '+(b<1024?b+' B':(b/1024).toFixed(1)+' KB')+
+      ' · '+Object.keys(s.days).length+' days logged';
+  }catch(e){}
+}
+function corr(a,b){
+  const n=a.length, ma=a.reduce((x,y)=>x+y,0)/n, mb=b.reduce((x,y)=>x+y,0)/n;
+  let num=0,da=0,db=0;
+  for(let i=0;i<n;i++){ const x=a[i]-ma, y=b[i]-mb; num+=x*y; da+=x*x; db+=y*y; }
+  return (da&&db)?num/Math.sqrt(da*db):0;
+}
+function wipe(){
+  if(!confirm('Erase ALL Flight Deck data — every log, card, habit, goal and streak?\n\nThis cannot be undone.')) return;
+  if(!confirm('Really sure? Export first if you have any doubt.')) return;
+  localStorage.removeItem('flightdeck.v1'); location.href='../index.html';
+}
+document.getElementById('imp').addEventListener('change',e=>{
+  if(e.target.files[0]) FD.importJSON(e.target.files[0],ok=>ok&&location.reload());
+});
+paint();
+</script>
+</body>
+</html>

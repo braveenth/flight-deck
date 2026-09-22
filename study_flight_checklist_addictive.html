@@ -1,0 +1,545 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Study Flight Checklist</title>
+<style>
+  :root{
+    --bg:#070b11;
+    --panel:#101720;
+    --panel2:#0c121a;
+    --text:#f7f9fc;
+    --muted:#8f9cab;
+    --line:#243042;
+    --accent:#7aa7ff;
+    --accent2:#a886ff;
+    --good:#63d991;
+    --warn:#ffd16a;
+    --danger:#ff7d84;
+    --shadow:0 18px 60px rgba(0,0,0,.28);
+  }
+  [data-theme="light"]{
+    --bg:#f4f7fb;
+    --panel:#ffffff;
+    --panel2:#f7f9fc;
+    --text:#142033;
+    --muted:#667386;
+    --line:#dbe2eb;
+    --accent:#3f77df;
+    --accent2:#7656d6;
+    --good:#23965a;
+    --warn:#9b6500;
+    --danger:#c24d55;
+    --shadow:0 18px 60px rgba(30,50,80,.10);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:
+      radial-gradient(circle at 10% 0%,rgba(122,167,255,.10),transparent 30%),
+      radial-gradient(circle at 90% 10%,rgba(168,134,255,.08),transparent 28%),
+      linear-gradient(rgba(255,255,255,.022) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.022) 1px,transparent 1px),
+      var(--bg);
+    background-size:auto,auto,28px 28px,28px 28px,auto;
+    color:var(--text);
+    min-height:100vh;
+    transition:background .2s,color .2s;
+  }
+  .wrap{max-width:1080px;margin:0 auto;padding:22px 18px 70px}
+  .top{
+    display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
+    padding:22px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 94%,transparent);
+    border-radius:22px;position:sticky;top:10px;z-index:20;backdrop-filter:blur(14px);box-shadow:var(--shadow)
+  }
+  h1{margin:0;font-size:clamp(29px,5vw,48px);letter-spacing:-.04em}
+  .sub{color:var(--muted);margin-top:5px;font-size:15px}
+  .date{text-align:right;color:var(--muted);font-weight:700;font-size:13px}
+  .top-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}
+  .progress{margin-top:13px;height:9px;background:var(--line);border-radius:999px;overflow:hidden;position:relative}
+  .progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--good));transition:.28s}
+  .stat-strip{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px
+  }
+  .stat{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px 15px;box-shadow:var(--shadow)
+  }
+  .stat .n{font-size:25px;font-weight:900;letter-spacing:-.03em}
+  .stat .l{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.10em;font-weight:800;margin-top:2px}
+  .hero{
+    margin-top:18px;padding:22px;border:1px solid color-mix(in srgb,var(--accent) 45%,var(--line));
+    border-radius:22px;background:linear-gradient(135deg,rgba(122,167,255,.11),rgba(168,134,255,.08)),var(--panel);
+    display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;box-shadow:var(--shadow)
+  }
+  .hero h2{font-size:24px;margin:0 0 6px;letter-spacing:-.03em}
+  .hero p{margin:0;color:var(--muted)}
+  .launch{
+    min-width:210px;padding:15px 20px!important;border-radius:15px!important;
+    font-size:16px!important;background:linear-gradient(135deg,var(--accent),var(--accent2))!important;
+    color:white!important;border:0!important;box-shadow:0 10px 30px rgba(90,110,255,.25)
+  }
+  .grid{display:grid;grid-template-columns:1.18fr .82fr;gap:18px;margin-top:18px}
+  .card{
+    background:color-mix(in srgb,var(--panel) 96%,transparent);border:1px solid var(--line);
+    border-radius:20px;padding:20px;box-shadow:var(--shadow)
+  }
+  .card h2{font-size:18px;margin:0 0 4px}
+  .card p{margin:0 0 14px;color:var(--muted);font-size:14px}
+  .section-badge{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:900;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);margin-bottom:7px}
+  .checklist{display:grid;gap:9px}
+  label.item{
+    display:flex;gap:12px;align-items:flex-start;padding:12px 13px;border:1px solid var(--line);
+    border-radius:13px;background:var(--panel2);cursor:pointer;transition:.16s transform,.16s border,.16s background
+  }
+  label.item:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--line));transform:translateY(-1px)}
+  input[type=checkbox]{width:21px;height:21px;accent-color:var(--good);margin-top:1px;flex:none}
+  .item span{line-height:1.35}
+  .item.done{background:color-mix(in srgb,var(--good) 7%,var(--panel2))}
+  .item.done span{text-decoration:line-through;color:var(--muted)}
+  .field{display:grid;gap:7px;margin:13px 0 3px}
+  .field label{color:var(--muted);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.10em}
+  input[type=text],textarea{
+    width:100%;border:1px solid var(--line);background:var(--panel2);color:var(--text);
+    padding:13px 14px;border-radius:12px;font:inherit;outline:none
+  }
+  textarea{min-height:94px;resize:vertical}
+  input[type=text]:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(122,167,255,.10)}
+  .timer-wrap{
+    border:1px solid var(--line);border-radius:18px;padding:15px;background:var(--panel2)
+  }
+  .timer{
+    font-variant-numeric:tabular-nums;font-weight:950;font-size:clamp(48px,10vw,76px);
+    letter-spacing:-.055em;text-align:center;margin:9px 0 7px
+  }
+  .timer-label{text-align:center;color:var(--accent);font-size:12px;text-transform:uppercase;letter-spacing:.14em;font-weight:900}
+  .focus-meta{text-align:center;color:var(--muted);font-size:12px;margin-bottom:10px}
+  .buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}
+  button{
+    border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:11px 13px;
+    border-radius:12px;font-weight:850;cursor:pointer;font-size:13px;transition:.15s transform,.15s filter
+  }
+  button:hover{filter:brightness(1.08);transform:translateY(-1px)}
+  button.primary{background:var(--accent);color:white;border-color:transparent}
+  button.good{background:var(--good);color:white;border-color:transparent}
+  button.danger{background:color-mix(in srgb,var(--danger) 12%,var(--panel));color:var(--danger)}
+  .rule{
+    margin-top:12px;padding:16px 17px;border:1px solid color-mix(in srgb,var(--accent) 42%,var(--line));
+    border-radius:14px;background:rgba(117,167,255,.065);font-size:17px;line-height:1.45;font-weight:850
+  }
+  .emergency{border-color:color-mix(in srgb,var(--warn) 44%,var(--line))}
+  .emergency strong{color:var(--warn)}
+  .tiny{font-size:11px;color:var(--muted);margin-top:11px;text-align:center}
+  .status{font-size:13px;color:var(--good);min-height:20px;margin-top:8px;text-align:center;font-weight:800}
+  .xpbar{height:8px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:8px}
+  .xpbar>div{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));width:0;transition:.3s}
+  .reward{
+    margin-top:14px;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--panel2);
+    text-align:center
+  }
+  .reward .big{font-size:27px;font-weight:950;letter-spacing:-.03em}
+  .reward .small{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.10em;font-weight:900}
+  .toast{
+    position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+    background:var(--text);color:var(--bg);padding:12px 17px;border-radius:999px;font-weight:900;
+    box-shadow:var(--shadow);transition:.22s;z-index:100
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:90}
+  .confetti i{position:absolute;top:-20px;width:8px;height:14px;border-radius:2px;animation:fall 1.55s linear forwards}
+  @keyframes fall{to{transform:translateY(110vh) rotate(620deg);opacity:.2}}
+  .pulse{animation:pulse .5s ease}
+  @keyframes pulse{50%{transform:scale(1.025)}}
+  .focus-mode main,.focus-mode .stat-strip,.focus-mode .hero,.focus-mode .emergency,.focus-mode .rule-card,.focus-mode .reset-card{display:none}
+  .focus-mode .grid{grid-template-columns:minmax(320px,560px);justify-content:center}
+  .focus-mode .timer{font-size:clamp(76px,17vw,138px)}
+  .focus-mode .card.timer-card{padding:30px}
+  @media(max-width:800px){
+    .grid{grid-template-columns:1fr}.top{grid-template-columns:1fr}.date{text-align:left}
+    .top-actions{justify-content:flex-start}.stat-strip{grid-template-columns:repeat(2,1fr)}
+    .hero{grid-template-columns:1fr}.launch{width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <section class="top">
+    <div>
+      <h1>✈ Study Flight</h1>
+      <div class="sub">No deciding. No perfect moment. Run the next action.</div>
+      <div class="progress"><div id="progressBar"></div></div>
+    </div>
+    <div>
+      <div class="date" id="date"></div>
+      <div class="top-actions">
+        <button id="focusToggle" onclick="toggleFocusMode()">◉ FOCUS MODE</button>
+        <button id="themeToggle" onclick="toggleTheme()">☀ LIGHT MODE</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="stat-strip">
+    <div class="stat"><div class="n">🔥 <span id="streak">0</span></div><div class="l">Day streak</div></div>
+    <div class="stat"><div class="n"><span id="xp">0</span> XP</div><div class="l">Level <span id="level">1</span></div><div class="xpbar"><div id="xpBar"></div></div></div>
+    <div class="stat"><div class="n" id="sessions">0</div><div class="l">Focus flights today</div></div>
+    <div class="stat"><div class="n"><span id="completion">0</span>%</div><div class="l">Checklist complete</div></div>
+  </section>
+
+  <section class="hero">
+    <div>
+      <div class="section-badge">⚡ Lowest-friction action</div>
+      <h2>You only owe this page five minutes.</h2>
+      <p>Open yesterday's notes. Start the timer. Momentum can decide what happens after that.</p>
+    </div>
+    <button class="launch" onclick="quickLaunch()">▶ START 5-MIN TAKEOFF</button>
+  </section>
+
+  <div class="grid">
+    <main>
+      <section class="card">
+        <div class="section-badge">01 · Before takeoff</div>
+        <h2>PRE-FLIGHT</h2>
+        <p>Remove choices before asking yourself to concentrate.</p>
+        <div class="checklist" data-group="main">
+          <label class="item"><input type="checkbox"><span>Phone on Do Not Disturb</span></label>
+          <label class="item"><input type="checkbox"><span>Water ready</span></label>
+          <label class="item"><input type="checkbox"><span>Sit at study location</span></label>
+          <label class="item"><input type="checkbox"><span>Close unrelated tabs</span></label>
+          <label class="item"><input type="checkbox"><span>Open yesterday's notes</span></label>
+          <label class="item"><input type="checkbox"><span>Review notes for 5 minutes</span></label>
+          <label class="item"><input type="checkbox"><span>Open today's pre-selected chapter / section</span></label>
+        </div>
+        <div class="field">
+          <label>Today's target</label>
+          <input id="target" type="text" placeholder="e.g. Chapter 4 → Sections 4.1, 4.2, 4.3">
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:18px">
+        <div class="section-badge">02 · Wheels up</div>
+        <h2>TAKEOFF</h2>
+        <p>Starting is the win. Precision can come later.</p>
+        <div class="checklist" data-group="main">
+          <label class="item"><input type="checkbox"><span>Start a 25-minute focus block</span></label>
+          <label class="item"><input type="checkbox"><span>Begin at the exact section listed above</span></label>
+          <label class="item"><input type="checkbox"><span>No reorganizing the study system</span></label>
+          <label class="item"><input type="checkbox"><span>No searching for a “better” place to start</span></label>
+          <label class="item"><input type="checkbox"><span>Confused? Mark <b>?</b> and continue</span></label>
+          <label class="item"><input type="checkbox"><span>Mistake? Correct it and continue</span></label>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:18px">
+        <div class="section-badge">03 · Stay airborne</div>
+        <h2>CRUISE</h2>
+        <p>Sections are the unit of accomplishment. Timers are the unit of focus.</p>
+        <div class="checklist" data-group="main">
+          <label class="item"><input type="checkbox"><span>Finish current section</span></label>
+          <label class="item"><input type="checkbox"><span>Check it off ✓</span></label>
+          <label class="item"><input type="checkbox"><span>Write 1–3 key takeaways</span></label>
+          <label class="item"><input type="checkbox"><span>Take a 5-minute break</span></label>
+          <label class="item"><input type="checkbox"><span>Start next section</span></label>
+        </div>
+        <div class="field">
+          <label>Key takeaways</label>
+          <textarea id="takeaways" placeholder="1.&#10;2.&#10;3."></textarea>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top:18px">
+        <div class="section-badge">04 · Make tomorrow easy</div>
+        <h2>LANDING</h2>
+        <p>A good landing removes tomorrow morning's first decision.</p>
+        <div class="checklist" data-group="main">
+          <label class="item"><input type="checkbox"><span>Write what I completed</span></label>
+          <label class="item"><input type="checkbox"><span>Mark unfinished material →</span></label>
+          <label class="item"><input type="checkbox"><span>Choose exactly where I start tomorrow</span></label>
+          <label class="item"><input type="checkbox"><span>Leave the correct tab / page ready</span></label>
+          <label class="item"><input type="checkbox"><span>Write tomorrow's first task</span></label>
+          <label class="item"><input type="checkbox"><span><b>SESSION COMPLETE ✓</b></span></label>
+        </div>
+        <div class="field">
+          <label>Tomorrow's first task</label>
+          <input id="tomorrow" type="text" placeholder="Review today's notes → Section ___">
+        </div>
+      </section>
+    </main>
+
+    <aside>
+      <section class="card timer-card">
+        <div class="section-badge">Live instrument</div>
+        <h2>FOCUS TIMER</h2>
+        <p>Short enough to start. Long enough to build momentum.</p>
+        <div class="timer-wrap">
+          <div class="timer-label" id="timerLabel">READY</div>
+          <div class="timer" id="timer">25:00</div>
+          <div class="focus-meta" id="focusMeta">Complete a focus flight to earn +25 XP</div>
+          <div class="buttons">
+            <button class="primary" onclick="startTimer(25)">25 MIN</button>
+            <button onclick="startTimer(5)">5 MIN</button>
+            <button class="good" onclick="toggleTimer()">PAUSE / RESUME</button>
+            <button class="danger" onclick="resetTimer()">RESET</button>
+          </div>
+        </div>
+        <div class="status" id="status"></div>
+        <div class="reward">
+          <div class="small">Next level</div>
+          <div class="big"><span id="xpNext">100</span> XP</div>
+        </div>
+      </section>
+
+      <section class="card emergency" style="margin-top:18px">
+        <div class="section-badge">Emergency procedure</div>
+        <h2>🚨 ABORTED TAKEOFF</h2>
+        <p>If you catch yourself deciding, optimizing, waiting, or worrying:</p>
+        <div class="rule">
+          <strong>STOP CHOOSING.</strong><br><br>
+          1. Open yesterday's notes.<br>
+          2. Set 5 minutes.<br>
+          3. Start reading.
+        </div>
+      </section>
+
+      <section class="card rule-card" style="margin-top:18px">
+        <div class="section-badge">Operating principle</div>
+        <h2>THE RULE</h2>
+        <div class="rule">
+          I do not need the perfect time.<br>
+          I do not need the perfect plan.<br>
+          I only need the next section.
+        </div>
+      </section>
+
+      <section class="card reset-card" style="margin-top:18px">
+        <h2>RESET</h2>
+        <p>Your daily checklist resets automatically. Your streak and XP stay.</p>
+        <button class="danger" style="width:100%" onclick="clearToday()">CLEAR TODAY</button>
+        <div class="tiny">All data stays locally in this browser.</div>
+      </section>
+    </aside>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="confetti" id="confetti"></div>
+<script>
+const STORE_KEY="study-flight-checklist-v2";
+const META_KEY="study-flight-meta-v2";
+const THEME_KEY="study-flight-theme";
+const todayKey=localDateKey(new Date());
+const allChecks=[...document.querySelectorAll('input[type="checkbox"]')];
+const fields=["target","takeaways","tomorrow"];
+
+function localDateKey(d){
+  const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,"0"),day=String(d.getDate()).padStart(2,"0");
+  return `${y}-${m}-${day}`;
+}
+function dayDiff(a,b){
+  const A=new Date(a+"T12:00:00"),B=new Date(b+"T12:00:00");
+  return Math.round((B-A)/86400000);
+}
+function getMeta(){
+  try{
+    return Object.assign({xp:0,streak:0,lastActive:null,totalSessions:0,completedDates:{}},
+      JSON.parse(localStorage.getItem(META_KEY)||"{}"));
+  }catch(e){return {xp:0,streak:0,lastActive:null,totalSessions:0,completedDates:{}}}
+}
+function setMeta(m){localStorage.setItem(META_KEY,JSON.stringify(m))}
+function applyTheme(theme){
+  document.documentElement.setAttribute("data-theme",theme);
+  localStorage.setItem(THEME_KEY,theme);
+  const btn=document.getElementById("themeToggle");
+  if(btn) btn.textContent=theme==="light"?"☾ DARK MODE":"☀ LIGHT MODE";
+}
+function toggleTheme(){
+  applyTheme((document.documentElement.getAttribute("data-theme")||"dark")==="dark"?"light":"dark");
+}
+function toggleFocusMode(){
+  document.getElementById("app").classList.toggle("focus-mode");
+  const on=document.getElementById("app").classList.contains("focus-mode");
+  document.getElementById("focusToggle").textContent=on?"← EXIT FOCUS":"◉ FOCUS MODE";
+  if(on) window.scrollTo({top:0,behavior:"smooth"});
+}
+function formatDate(){
+  document.getElementById("date").textContent=new Date().toLocaleDateString(undefined,{
+    weekday:"long",month:"long",day:"numeric",year:"numeric"
+  });
+}
+function load(){
+  let data={};
+  try{data=JSON.parse(localStorage.getItem(STORE_KEY)||"{}")}catch(e){}
+  if(data.date!==todayKey)data={date:todayKey,checks:[],fields:{},sessions:0};
+  allChecks.forEach((cb,i)=>{
+    cb.checked=!!data.checks?.[i];
+    cb.closest(".item").classList.toggle("done",cb.checked);
+  });
+  fields.forEach(id=>document.getElementById(id).value=data.fields?.[id]||"");
+  save(false);
+  updateProgress();
+  updateStats();
+}
+function getTodayData(){
+  try{
+    const d=JSON.parse(localStorage.getItem(STORE_KEY)||"{}");
+    return d.date===todayKey?d:{date:todayKey,checks:[],fields:{},sessions:0};
+  }catch(e){return {date:todayKey,checks:[],fields:{},sessions:0}}
+}
+function save(showStatus=true){
+  const prev=getTodayData();
+  const data={
+    date:todayKey,
+    checks:allChecks.map(x=>x.checked),
+    fields:Object.fromEntries(fields.map(id=>[id,document.getElementById(id).value])),
+    sessions:prev.sessions||0
+  };
+  localStorage.setItem(STORE_KEY,JSON.stringify(data));
+  if(showStatus)flash("Saved");
+}
+function updateProgress(){
+  const done=allChecks.filter(x=>x.checked).length;
+  const pct=Math.round(done/allChecks.length*100);
+  document.getElementById("progressBar").style.width=pct+"%";
+  document.getElementById("completion").textContent=pct;
+  if(pct===100) completeDay();
+}
+function updateStats(){
+  const meta=getMeta();
+  const data=getTodayData();
+  const level=Math.floor(meta.xp/100)+1;
+  const within=meta.xp%100;
+  document.getElementById("xp").textContent=meta.xp;
+  document.getElementById("level").textContent=level;
+  document.getElementById("xpBar").style.width=within+"%";
+  document.getElementById("xpNext").textContent=100-within;
+  document.getElementById("streak").textContent=meta.streak||0;
+  document.getElementById("sessions").textContent=data.sessions||0;
+}
+function awardXP(points,message){
+  const meta=getMeta();
+  meta.xp=(meta.xp||0)+points;
+  setMeta(meta);
+  updateStats();
+  toast(`+${points} XP · ${message}`);
+}
+function registerActivity(){
+  const meta=getMeta();
+  if(meta.lastActive===todayKey)return;
+  if(!meta.lastActive)meta.streak=1;
+  else{
+    const diff=dayDiff(meta.lastActive,todayKey);
+    meta.streak=diff===1?(meta.streak||0)+1:1;
+  }
+  meta.lastActive=todayKey;
+  setMeta(meta);
+  updateStats();
+}
+function completeDay(){
+  const meta=getMeta();
+  if(meta.completedDates?.[todayKey])return;
+  meta.completedDates=meta.completedDates||{};
+  meta.completedDates[todayKey]=true;
+  setMeta(meta);
+  registerActivity();
+  awardXP(50,"Checklist complete");
+  confetti();
+}
+allChecks.forEach(cb=>cb.addEventListener("change",()=>{
+  const wasDone=cb.closest(".item").classList.contains("done");
+  cb.closest(".item").classList.toggle("done",cb.checked);
+  if(cb.checked&&!wasDone){registerActivity();awardXP(2,"Checklist step");}
+  updateProgress();save(false);
+}));
+fields.forEach(id=>document.getElementById(id).addEventListener("input",()=>save(false)));
+
+function clearToday(){
+  if(!confirm("Clear today's checklist and notes? Your streak and XP will stay."))return;
+  const data=getTodayData();
+  localStorage.setItem(STORE_KEY,JSON.stringify({date:todayKey,checks:[],fields:{},sessions:data.sessions||0}));
+  allChecks.forEach(x=>{x.checked=false;x.closest(".item").classList.remove("done")});
+  fields.forEach(id=>document.getElementById(id).value="");
+  updateProgress();resetTimer();flash("Today cleared");
+}
+let remaining=25*60,interval=null,running=false,currentMode="READY",timerMinutes=25,completedCurrent=false;
+function drawTimer(){
+  const m=Math.floor(remaining/60).toString().padStart(2,"0");
+  const s=(remaining%60).toString().padStart(2,"0");
+  document.getElementById("timer").textContent=`${m}:${s}`;
+  document.getElementById("timerLabel").textContent=currentMode;
+}
+function quickLaunch(){
+  startTimer(5);
+  document.querySelector(".timer-card").scrollIntoView({behavior:"smooth",block:"center"});
+}
+function startTimer(mins){
+  clearInterval(interval);
+  timerMinutes=mins;remaining=mins*60;completedCurrent=false;
+  currentMode=mins===25?"FOCUS FLIGHT":"5-MINUTE TAKEOFF";
+  running=true;interval=setInterval(tick,1000);drawTimer();
+  registerActivity();
+  flash(currentMode+" started");
+}
+function tick(){
+  if(!running)return;
+  remaining--;drawTimer();
+  if(remaining<=0){
+    clearInterval(interval);interval=null;running=false;remaining=0;currentMode="COMPLETE";drawTimer();
+    finishTimer();
+  }
+}
+function finishTimer(){
+  if(completedCurrent)return;
+  completedCurrent=true;
+  const data=getTodayData();
+  data.sessions=(data.sessions||0)+1;
+  localStorage.setItem(STORE_KEY,JSON.stringify(data));
+  const meta=getMeta();
+  meta.totalSessions=(meta.totalSessions||0)+1;
+  setMeta(meta);
+  awardXP(timerMinutes===25?25:5,timerMinutes===25?"Focus flight complete":"Takeoff complete");
+  updateStats();confetti(timerMinutes===25?26:10);
+  beep();
+}
+function toggleTimer(){
+  if(remaining<=0)return;
+  running=!running;
+  if(running&&!interval)interval=setInterval(tick,1000);
+  if(!running&&interval){clearInterval(interval);interval=null}
+  currentMode=running?"RUNNING":"PAUSED";drawTimer();
+}
+function resetTimer(){
+  clearInterval(interval);interval=null;running=false;remaining=25*60;timerMinutes=25;completedCurrent=false;currentMode="READY";drawTimer();
+}
+function beep(){
+  try{
+    const a=new AudioContext(),o=a.createOscillator(),g=a.createGain();
+    o.connect(g);g.connect(a.destination);o.frequency.value=880;
+    g.gain.setValueAtTime(.10,a.currentTime);o.start();o.stop(a.currentTime+.25);
+  }catch(e){}
+}
+function flash(msg){
+  const el=document.getElementById("status");el.textContent=msg;
+  clearTimeout(window._flash);window._flash=setTimeout(()=>el.textContent="",1800);
+}
+function toast(msg){
+  const el=document.getElementById("toast");el.textContent=msg;el.classList.add("show");
+  clearTimeout(window._toast);window._toast=setTimeout(()=>el.classList.remove("show"),1800);
+}
+function confetti(count=18){
+  const box=document.getElementById("confetti");
+  const palette=["#7aa7ff","#a886ff","#63d991","#ffd16a","#ff7d84"];
+  for(let i=0;i<count;i++){
+    const p=document.createElement("i");
+    p.style.left=Math.random()*100+"vw";
+    p.style.background=palette[i%palette.length];
+    p.style.animationDelay=(Math.random()*.25)+"s";
+    p.style.transform=`rotate(${Math.random()*180}deg)`;
+    box.appendChild(p);
+    setTimeout(()=>p.remove(),1900);
+  }
+}
+applyTheme(localStorage.getItem(THEME_KEY)||"dark");
+formatDate();load();drawTimer();
+</script>
+</body>
+</html>

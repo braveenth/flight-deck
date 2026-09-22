@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Debrief — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .steps{display:flex;gap:5px;margin:18px 0 22px}
+  .steps i{flex:1;height:5px;border-radius:999px;background:var(--line);transition:.3s}
+  .steps i.on{background:linear-gradient(90deg,var(--accent2),var(--accent))}
+  .step{display:none;animation:fdpop .25s ease}
+  .step.show{display:block}
+  .stepno{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent2);font-weight:900}
+  .step h2{font-size:clamp(22px,3.6vw,30px);margin:8px 0 8px;letter-spacing:-.035em;line-height:1.15}
+  .step .why{color:var(--muted);font-size:14px;line-height:1.6;max-width:62ch}
+  .nav{display:flex;gap:10px;margin-top:22px;align-items:center}
+  .scorerow{padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel2);margin-top:9px}
+  .scorerow .t{font-weight:800;font-size:14px;line-height:1.4;margin-bottom:10px}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel);
+    color:var(--text);font-weight:850;font-size:12px;cursor:pointer;font-family:inherit;transition:.15s}
+  .seg button.on{color:#fff;border-color:transparent}
+  .seg button.on[data-v="Yes"]{background:var(--good)}
+  .seg button.on[data-v="Partly"]{background:var(--warn);color:#241800}
+  .seg button.on[data-v="No"]{background:var(--danger)}
+  .ifthen{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:9px}
+  .ifthen .w{font-weight:900;font-size:12px;letter-spacing:.1em;color:var(--accent2);text-transform:uppercase}
+  .done-card{text-align:center;padding:34px 22px}
+  .done-card .big{font-size:52px}
+  .summary div{padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;text-align:left}
+  .summary div:last-child{border:0}
+  .summary b{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.13em;display:block;margin-bottom:3px}
+</style>
+</head>
+<body data-root=".." data-module="debrief">
+<div class="wrap wrap-narrow">
+
+  <div class="phead">
+    <div class="kicker">🌙 Daily · Night · ~5 minutes · the last thing you look at</div>
+    <h1>Debrief</h1>
+    <div class="lede">Close the loop while the day is still in memory. Half of this is measurement; the other half is
+      making tomorrow morning frictionless.</div>
+  </div>
+
+  <div class="steps" id="steps"></div>
+
+  <section class="card">
+
+    <!-- 1 -->
+    <div class="step" data-i="0">
+      <div class="stepno">Step 1 of 6 · Score</div>
+      <h2>Did this morning's plan actually happen?</h2>
+      <p class="why">Answer fast and honestly. This isn't a verdict on you — it's a signal about whether your plans
+        are realistic, which is the only thing that will let you fix them.</p>
+      <div id="scores" style="margin-top:16px"></div>
+      <div class="field"><label>Study minutes logged today</label>
+        <div class="note" id="autoStats" style="margin-top:0"></div></div>
+    </div>
+
+    <!-- 2 -->
+    <div class="step" data-i="1">
+      <div class="stepno">Step 2 of 6 · Three good things</div>
+      <h2>Three things that went well, and why.</h2>
+      <p class="why">The “why” is the part that does the work — it forces you to identify causes, some of which are
+        things you did and can do again. Keep them small. “The coffee was good” is a valid entry.</p>
+      <div class="field"><label>① What went well</label><input type="text" id="g1"/></div>
+      <div class="field" style="margin-top:7px"><label>…why did it happen?</label><input type="text" id="w1"/></div>
+      <div class="field"><label>② What went well</label><input type="text" id="g2"/></div>
+      <div class="field" style="margin-top:7px"><label>…why did it happen?</label><input type="text" id="w2"/></div>
+      <div class="field"><label>③ What went well</label><input type="text" id="g3"/></div>
+      <div class="field" style="margin-top:7px"><label>…why did it happen?</label><input type="text" id="w3"/></div>
+      <div class="cite"><b>Seligman, Steen, Park &amp; Peterson (2005), <i>American Psychologist</i> 60(5):410–421.</b>
+        In a randomised placebo-controlled trial, participants who wrote three things that went well and why, every
+        night for one week, were happier and less depressed at follow-ups <i>up to six months later</i> — long after
+        the exercise itself ended. It was the strongest of the five interventions tested.</div>
+    </div>
+
+    <!-- 3 -->
+    <div class="step" data-i="2">
+      <div class="stepno">Step 3 of 6 · Friction</div>
+      <h2>What actually got in the way?</h2>
+      <p class="why">One obstacle, named precisely. Then a rule for next time. This is the single mechanism that turns
+        a bad day into a better system instead of just a worse mood.</p>
+      <div class="field"><label>The one thing that cost me the most today</label>
+        <input type="text" id="friction" placeholder="Opened my phone during the second block and lost 40 minutes"/></div>
+      <div class="field">
+        <label>Repair rule</label>
+        <div class="ifthen"><span class="w">If</span><input type="text" id="fIf" placeholder="that happens again"/></div>
+        <div class="ifthen"><span class="w">Then</span><input type="text" id="fThen" placeholder="I will…"/></div>
+      </div>
+      <button class="btn wide" style="margin-top:13px" onclick="armRule()">🛡️ Arm this in the Firewall</button>
+    </div>
+
+    <!-- 4 -->
+    <div class="step" data-i="3">
+      <div class="stepno">Step 4 of 6 · Recovery</div>
+      <h2>Say the thing you'd say to a friend.</h2>
+      <p class="why">If today went badly, self-criticism feels productive and isn't. In controlled experiments,
+        people given a brief self-compassion prompt after a failure studied <i>longer</i> for a make-up test than those
+        given a self-esteem boost or no prompt — because shame makes you avoid the thing.</p>
+      <div class="field"><label>One sentence, to yourself, about today</label>
+        <textarea id="compassion" placeholder="Today was mostly a write-off, and that's a normal thing that happens to people who are actually attempting something. Tomorrow starts at §4.4."></textarea></div>
+      <div class="row" style="margin-top:11px;gap:7px">
+        <button class="btn sm" onclick="prefill(0)">Bad day</button>
+        <button class="btn sm" onclick="prefill(1)">Middling day</button>
+        <button class="btn sm" onclick="prefill(2)">Good day</button>
+      </div>
+      <div class="cite"><b>Breines &amp; Chen (2012), <i>Personality and Social Psychology Bulletin</i>
+        38(9):1133–1143.</b> Four experiments: self-compassion after a failure increased self-improvement motivation
+        relative to self-esteem boosts and controls.</div>
+    </div>
+
+    <!-- 5 -->
+    <div class="step" data-i="4">
+      <div class="stepno">Step 5 of 6 · Tomorrow</div>
+      <h2>Decide the first move now.</h2>
+      <p class="why">Morning-you is not a reliable planner. Tonight-you already knows where you stopped. Make the
+        first action so specific and so small that there is nothing left to decide at 8am.</p>
+      <div class="field"><label>Tomorrow's very first action</label>
+        <input type="text" id="first" placeholder="Open the PDF to p.61 and read the §4.4 intro"/></div>
+      <div class="field"><label>Where and when</label>
+        <input type="text" id="firstWhen" placeholder="8:15am, kitchen table, before coffee"/></div>
+      <div class="field"><label>What's already set up for it?</label>
+        <input type="text" id="firstPrep" placeholder="Book on the table, laptop closed, phone in the hall"/></div>
+      <div class="note acc" style="margin-top:14px">
+        <b>Leave the runway lit.</b> Physically stage the first action before you go to bed — the open book, the
+        laid-out clothes, the tab left open. It removes the decision entirely rather than making it easier.
+      </div>
+    </div>
+
+    <!-- 6 -->
+    <div class="step" data-i="5">
+      <div class="stepno">Step 6 of 6 · Wind-down</div>
+      <h2>Land the plane properly.</h2>
+      <p class="why">Everything you studied today gets consolidated tonight or not at all. Treat sleep as the last
+        step of studying, not the thing that comes after it.</p>
+      <div class="checklist" id="wind" style="margin-top:16px">
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Phone charging outside the bedroom</b></span></label>
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Screens off</b> — or at least dimmed and put down</span></label>
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Room dark and cool</b></span></label>
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Tomorrow's first action is physically staged</b></span></label>
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Going to bed within 30 min of my usual time</b></span></label>
+      </div>
+      <div class="field"><label>Rate the day — 1 wrote-off, 10 excellent</label>
+        <input type="range" id="rating" min="1" max="10" value="6"/>
+        <div class="row"><span class="tiny">1</span><span class="right mono" id="ratingV">6</span></div></div>
+      <button class="btn grad big wide" id="commit" style="margin-top:18px">🌙 CLOSE THE DAY — +40 XP</button>
+    </div>
+
+    <!-- done -->
+    <div class="step" data-i="6">
+      <div class="done-card">
+        <div class="big">🛬</div>
+        <h2 style="margin-top:10px">Day closed.</h2>
+        <p class="why" style="margin:0 auto">Nothing left to decide tonight. Tomorrow starts with one action, and it's
+          already written down.</p>
+        <div class="note acc" style="margin-top:20px;font-size:16px;font-weight:800" id="firstEcho"></div>
+        <div class="summary" id="summary" style="margin-top:20px"></div>
+        <div class="btnrow grid2" style="margin-top:18px">
+          <a class="btn" href="../index.html" style="text-decoration:none;text-align:center">← Mission Control</a>
+          <button class="btn ghost" onclick="go(0)">Edit debrief</button>
+        </div>
+        <div class="tiny" style="margin-top:16px">Now put the phone down. Genuinely — that's the last instruction.</div>
+      </div>
+    </div>
+
+    <div class="nav" id="nav">
+      <button class="btn" id="back">← Back</button>
+      <button class="btn primary right" id="next">Next →</button>
+    </div>
+  </section>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const M='debrief', TOTAL=6;
+const F=['g1','w1','g2','w2','g3','w3','friction','fIf','fThen','compassion','first','firstWhen','firstPrep'];
+let step=0;
+F.forEach(f=>FD.bindField(document.getElementById(f),M,f));
+FD.bindChecks(document.getElementById('wind'),M,null,3);
+
+const rate=document.getElementById('rating');
+rate.value=FD.mod(M).rating||6;
+document.getElementById('ratingV').textContent=rate.value;
+rate.addEventListener('input',()=>{
+  document.getElementById('ratingV').textContent=rate.value;
+  FD.setMod(M,{rating:+rate.value});
+});
+
+function d(){ return FD.mod(M); }
+function paintSteps(){
+  document.getElementById('steps').innerHTML=
+    Array.from({length:TOTAL},(_,i)=>'<i class="'+(i<=step?'on':'')+'"></i>').join('');
+}
+function go(i){
+  step=Math.max(0,Math.min(TOTAL,i));
+  FD.$$('.step').forEach(s=>s.classList.toggle('show',+s.dataset.i===step));
+  paintSteps();
+  document.getElementById('nav').style.display=step>=TOTAL?'none':'flex';
+  document.getElementById('back').style.visibility=step===0?'hidden':'visible';
+  document.getElementById('next').style.display=step===TOTAL-1?'none':'block';
+  if(step===0) scores();
+  if(step===6) summary();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function scores(){
+  const p=FD.mod('preflight'), sc=d().scores||{};
+  const items=[['o1',p.o1],['o2',p.o2],['o3',p.o3]].filter(x=>x[1]);
+  document.getElementById('scores').innerHTML = items.length ? items.map(([k,txt],i)=>
+    '<div class="scorerow"><div class="t">'+(i+1)+'. '+FD.esc(txt)+'</div>'+
+    '<div class="seg" data-k="'+k+'">'+['Yes','Partly','No'].map(v=>
+      '<button class="'+(sc[k]===v?'on':'')+'" data-v="'+v+'">'+v+'</button>').join('')+'</div></div>').join('')
+    : '<div class="empty">You didn’t run Preflight this morning, so there’s nothing to score.<br>'+
+      '<a href="preflight.html">Set tomorrow’s plan →</a></div>';
+  FD.$$('#scores .seg button').forEach(b=>b.onclick=()=>{
+    const k=b.closest('.seg').dataset.k, s=Object.assign({},d().scores||{});
+    s[k]=b.dataset.v; FD.setMod(M,{scores:s});
+    if(b.dataset.v==='Yes') FD.addXP(8,'Outcome hit');
+    scores();
+  });
+  const st=FD.mod('study'), rc=FD.mod('recall'), hb=FD.mod('habits');
+  const hs=(FD.read().habits||[]).filter(h=>!h.archived);
+  document.getElementById('autoStats').innerHTML=
+    '<b>'+(st.minutes||0)+' minutes focused</b> across '+(st.sessions||0)+' flight'+((st.sessions||0)===1?'':'s')+
+    ' · <b>'+(rc.reviewed||0)+'</b> cards recalled · <b>'+
+    Object.keys(hb.done||{}).length+'/'+hs.length+'</b> habits · <b>'+(FD.day().xp||0)+' XP</b> earned.';
+}
+function prefill(kind){
+  const t=[
+    'Today mostly didn’t work, and that is a normal thing that happens to people who are actually attempting something hard. It says nothing about whether I can do this. Tomorrow starts small.',
+    'A middling day. Some of it moved, some of it didn’t. Middling days are what four months are actually made of — I don’t need every one to be good, I need most of them to happen.',
+    'Today went well and I did that on purpose. Worth noticing, because I’m usually quicker to notice the opposite.'
+  ][kind];
+  const el=document.getElementById('compassion');
+  el.value=t; el.dispatchEvent(new Event('input'));
+}
+function armRule(){
+  const i=document.getElementById('fIf').value.trim(), t=document.getElementById('fThen').value.trim();
+  if(!i||!t){ FD.toast('⚠️ Fill in both halves first'); return; }
+  FD.mutate(s=>s.rules.push({id:FD.uid(),ifPart:i,thenPart:t}));
+  FD.addXP(8,'Repair rule armed'); FD.toast('Armed in the Firewall');
+}
+function summary(){
+  const v=d(), p=FD.mod('preflight'), st=FD.mod('study');
+  document.getElementById('firstEcho').textContent=
+    (v.first||'Open the thing and give it five minutes.')+
+    (v.firstWhen?'  ·  '+v.firstWhen:'');
+  const row=(l,x)=>x?'<div><b>'+l+'</b>'+FD.esc(x)+'</div>':'';
+  document.getElementById('summary').innerHTML=
+    row('Day rating',(v.rating||'—')+' / 10')+
+    row('Focused',(st.minutes||0)+' minutes · '+(FD.day().xp||0)+' XP')+
+    row('Went well',[v.g1,v.g2,v.g3].filter(Boolean).join(' · '))+
+    row('Cost me most',v.friction)+
+    row('Identity today',p.identity?'Someone who '+p.identity:'');
+}
+document.getElementById('next').onclick=()=>go(step+1);
+document.getElementById('back').onclick=()=>go(step-1);
+document.getElementById('commit').onclick=()=>{
+  if(!d().committed){
+    FD.setMod(M,{committed:true,rating:+rate.value});
+    FD.addXP(40,'Day closed'); FD.confetti(34); FD.chime();
+  } else FD.toast('Debrief updated');
+  summary(); go(6);
+};
+if(d().committed){ summary(); go(6); } else go(0);
+</script>
+</body>
+</html>

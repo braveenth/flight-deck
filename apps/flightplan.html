@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Flight Plan — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .goal{border:1px solid var(--line);border-radius:var(--r);background:var(--panel2);padding:18px;margin-top:14px}
+  .goal.on{border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+  .goal.off{border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+  .goal h3{font-size:17px;margin:0;letter-spacing:-.02em}
+  .goal .why{color:var(--muted);font-size:13px;margin-top:5px;line-height:1.5}
+  .gnums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+  .gnum{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 11px}
+  .gnum .n{font-size:17px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+  .gnum .l{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);font-weight:900;margin-top:3px}
+  .track{position:relative;height:10px;background:var(--line);border-radius:999px;margin-top:14px;overflow:visible}
+  .track>i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .track>b{position:absolute;top:-5px;width:2px;height:20px;background:var(--text);opacity:.55}
+  .track>b::after{content:attr(data-l);position:absolute;top:22px;left:50%;transform:translateX(-50%);
+    font-size:9px;color:var(--muted);white-space:nowrap;font-weight:800;letter-spacing:.06em}
+  .proc{display:flex;gap:9px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .proc:last-child{border:0}
+  .ms{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:12px}
+  .msc{padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel2);text-align:center}
+  .msc.hit{border-color:color-mix(in srgb,var(--good) 42%,var(--line));background:color-mix(in srgb,var(--good) 8%,var(--panel2))}
+  .msc .d{font-size:15px;font-weight:900}
+  .msc .t{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:900;margin-top:3px}
+  .editor{display:none} .editor.open{display:block;animation:fdpop .2s}
+  @media(max-width:640px){.gnums{grid-template-columns:repeat(2,1fr)}.ms{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body data-root=".." data-module="flightplan">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker">🎯 Set once · review every Sunday</div>
+    <h1>Flight Plan</h1>
+    <div class="lede">Four months is long enough to change something real and short enough that you can feel the
+      deadline. This page is the answer to “changed into what, exactly?”</div>
+  </div>
+
+  <div class="cols c4">
+    <div class="stat"><div class="n"><span id="kDay">1</span><span class="muted" style="font-size:15px">/120</span></div>
+      <div class="l">Program day</div><div class="bar thin" style="margin-top:9px"><i id="kDayBar"></i></div></div>
+    <div class="stat"><div class="n" id="kLeft">119</div><div class="l">Days remaining</div><div class="sm" id="kEnd">—</div></div>
+    <div class="stat"><div class="n" id="kGoals">0</div><div class="l">Active goals</div><div class="sm">Three is the ceiling</div></div>
+    <div class="stat"><div class="n" id="kTrack">—</div><div class="l">On pace</div><div class="sm" id="kTrackS">Update your numbers weekly</div></div>
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card">
+        <div class="row" style="margin-bottom:6px">
+          <div><div class="kicker" style="margin:0">Outcomes</div>
+            <h2 style="margin:4px 0 0">What these 120 days are for</h2></div>
+          <button class="btn sm right" onclick="toggleEditor()">+ Add goal</button>
+        </div>
+        <p class="sub">Each one needs a number you can check. “Get fitter” isn't a goal; “squat 100kg” and “run 5km
+          under 25:00” are. If you can't put a number on it, put a count on it: 60 study flights, 12 chapters, 40 applications.</p>
+
+        <div class="editor card" id="editor" style="background:var(--panel2);margin-bottom:14px">
+          <div class="field" style="margin-top:0"><label>Goal — the outcome, with a number in it</label>
+            <input type="text" id="eTitle" placeholder="Pass the certification exam"/></div>
+          <div class="cols c3">
+            <div class="field"><label>Unit</label><input type="text" id="eUnit" placeholder="chapters"/></div>
+            <div class="field"><label>Starting value</label><input type="number" id="eStart" value="0"/></div>
+            <div class="field"><label>Target value</label><input type="number" id="eTarget" placeholder="24"/></div>
+          </div>
+          <div class="field"><label>Why — what changes in your life if this lands?</label>
+            <textarea id="eWhy" style="min-height:60px" placeholder="I stop being stuck in a job I don't want"></textarea></div>
+          <div class="field"><label>Identity — who has to be true for this to happen?</label>
+            <input type="text" id="eIdent" placeholder="Someone who studies before they check their phone"/></div>
+          <div class="field"><label>The obstacle you already know is coming</label>
+            <input type="text" id="eObstacle" placeholder="Week 3, when it stops being novel"/></div>
+          <div class="field"><label>Weekly process target — the thing you control</label>
+            <input type="text" id="eProcess" placeholder="5 study flights + clear the recall queue 6 days"/></div>
+          <div class="btnrow grid2" style="margin-top:14px">
+            <button class="btn primary" onclick="saveGoal()">Save goal</button>
+            <button class="btn ghost" onclick="toggleEditor()">Cancel</button>
+          </div>
+        </div>
+
+        <div id="goals"></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Checkpoints</div>
+        <h2>Milestones</h2>
+        <p class="sub">Four months is too long to hold in your head. These are the four dates that matter.</p>
+        <div class="ms" id="miles"></div>
+        <div class="note" style="margin-top:14px">
+          <b>Expect week three to be the hard one.</b> That's when novelty has worn off and results haven't arrived yet.
+          Nothing has gone wrong when it happens — plan for it now, while you're optimistic.
+        </div>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">Why numbers</div>
+        <h2>Specific and hard beats “do your best”</h2>
+        <p class="sub" style="margin-bottom:0">Across four decades and hundreds of studies, specific and difficult
+          goals produced consistently higher performance than vague ones or urging people to try hard — as long as the
+          person is committed to the goal and gets feedback on progress. Both of those conditions are what the rest of
+          this app exists to supply.</p>
+        <div class="cite" style="margin-top:11px"><b>Locke &amp; Latham (2002), <i>American Psychologist</i>
+          57(9):705–717.</b></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Setup</div>
+        <h2>Program dates</h2>
+        <div class="field" style="margin-top:0"><label>Day 1 of your 120 days</label>
+          <input type="date" id="startDate"/></div>
+        <div class="tiny" style="margin-top:9px">Changing this shifts every countdown in the system. Your logged
+          history is unaffected.</div>
+        <div class="note acc" style="margin-top:13px">
+          <b>Pick a date that means something</b> — a Monday, the 1st, a birthday. People pursue goals more
+          aggressively right after a temporal landmark; it's a genuinely free boost.
+          <div class="cite"><b>Dai, Milkman &amp; Riis (2014), <i>Management Science</i> 60(10):2563–2582</b> —
+          "The fresh start effect."</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Rule of three</div>
+        <h2>Why you can't have six goals</h2>
+        <p class="sub" style="margin-bottom:0">Every additional goal divides the same finite attention and makes each
+          one's daily process target smaller and more skippable. Three is the working ceiling; two is better. Anything
+          you cut now you can start on day 121.</p>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const sd=document.getElementById('startDate');
+sd.value=FD.read().startDate||FD.key();
+sd.addEventListener('change',()=>{
+  if(!sd.value) return;
+  FD.mutate(s=>{ s.startDate=sd.value; });
+  FD.toast('Program dates updated'); FD.paintNav(); paint();
+});
+function toggleEditor(){ document.getElementById('editor').classList.toggle('open'); }
+function saveGoal(){
+  const title=document.getElementById('eTitle').value.trim();
+  const target=Number(document.getElementById('eTarget').value);
+  if(!title){ FD.toast('⚠️ Give the goal a name'); return; }
+  if(!target){ FD.toast('⚠️ A goal needs a target number'); return; }
+  if((FD.read().goals||[]).length>=3){ FD.toast('⚠️ Three is the ceiling. Finish or cut one first.'); return; }
+  FD.mutate(s=>s.goals.push({
+    id:FD.uid(), title,
+    unit:document.getElementById('eUnit').value.trim(),
+    start:Number(document.getElementById('eStart').value)||0,
+    target, current:Number(document.getElementById('eStart').value)||0,
+    why:document.getElementById('eWhy').value.trim(),
+    identity:document.getElementById('eIdent').value.trim(),
+    obstacle:document.getElementById('eObstacle').value.trim(),
+    process:document.getElementById('eProcess').value.trim(),
+    created:FD.key()
+  }));
+  ['eTitle','eUnit','eTarget','eWhy','eIdent','eObstacle','eProcess'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('eStart').value=0;
+  toggleEditor(); FD.addXP(25,'Goal set'); FD.confetti(26); paint();
+}
+function bump(id,delta){
+  FD.mutate(s=>{ const g=s.goals.find(x=>x.id===id); if(g) g.current=Number(g.current||0)+delta; });
+  FD.addXP(3,'Progress logged'); paint();
+}
+function setCurrent(id,v){
+  FD.mutate(s=>{ const g=s.goals.find(x=>x.id===id); if(g) g.current=Number(v)||0; });
+  paint();
+}
+function delGoal(id){
+  if(!confirm('Remove this goal?')) return;
+  FD.mutate(s=>{ s.goals=s.goals.filter(g=>g.id!==id); }); paint();
+}
+function analyse(g,pr){
+  const span=Number(g.target)-Number(g.start||0);
+  const made=Number(g.current||0)-Number(g.start||0);
+  const donePct=span?Math.round(made/span*100):0;
+  const expected=span*(pr.dayNo/pr.total);
+  const ratio=expected>0?made/expected:(made>0?2:0);
+  const projected=pr.dayNo>0?Number(g.start||0)+made*(pr.total/pr.dayNo):Number(g.start||0);
+  const perWeek=pr.dayNo>0?made/(pr.dayNo/7):0;
+  const needPerWeek=pr.left>0?(Number(g.target)-Number(g.current||0))/(pr.left/7):0;
+  return {span,made,donePct,expected:Math.round(expected*10)/10,ratio,
+          projected:Math.round(projected*10)/10,perWeek:Math.round(perWeek*10)/10,
+          needPerWeek:Math.round(needPerWeek*10)/10};
+}
+function paint(){
+  const pr=FD.program(), gs=FD.read().goals||[];
+  document.getElementById('kDay').textContent=pr.dayNo;
+  document.getElementById('kDayBar').style.width=pr.pct+'%';
+  document.getElementById('kLeft').textContent=pr.left;
+  document.getElementById('kEnd').textContent='Ends '+FD.parseKey(pr.end).toLocaleDateString(undefined,{month:'long',day:'numeric'});
+  document.getElementById('kGoals').textContent=gs.length;
+
+  if(gs.length){
+    const avg=gs.reduce((a,g)=>a+analyse(g,pr).ratio,0)/gs.length;
+    document.getElementById('kTrack').textContent=Math.round(avg*100)+'%';
+    document.getElementById('kTrackS').textContent=avg>=1?'Ahead of pace':avg>=.8?'Roughly on pace':'Behind — adjust the process target';
+  }
+
+  document.getElementById('goals').innerHTML = gs.length ? gs.map(g=>{
+    const a=analyse(g,pr);
+    const cls=a.ratio>=.95?'on':a.ratio>=.75?'':'off';
+    const marks=[25,50,75].map(p=>'<b style="left:'+p+'%" data-l="'+p+'%"></b>').join('');
+    return '<div class="goal '+cls+'">'+
+      '<div class="row"><h3>'+FD.esc(g.title)+'</h3>'+
+        '<button class="del right" onclick="delGoal(\''+g.id+'\')">✕</button></div>'+
+      (g.why?'<div class="why">'+FD.esc(g.why)+'</div>':'')+
+      (g.identity?'<div class="pill acc" style="margin-top:9px">Identity · '+FD.esc(g.identity)+'</div>':'')+
+      '<div class="track"><i style="width:'+Math.min(100,Math.max(0,a.donePct))+'%"></i>'+marks+'</div>'+
+      '<div style="height:20px"></div>'+
+      '<div class="gnums">'+
+        '<div class="gnum"><div class="n">'+FD.esc(g.current||0)+'</div><div class="l">Now ('+FD.esc(g.unit||'units')+')</div></div>'+
+        '<div class="gnum"><div class="n">'+FD.esc(g.target)+'</div><div class="l">Target</div></div>'+
+        '<div class="gnum"><div class="n">'+a.perWeek+'</div><div class="l">Per week so far</div></div>'+
+        '<div class="gnum"><div class="n">'+a.needPerWeek+'</div><div class="l">Needed / week</div></div>'+
+      '</div>'+
+      '<div class="note'+(a.ratio>=.95?' acc':a.ratio<.75?' warn':'')+'" style="margin-top:13px">'+
+        (pr.dayNo<7
+          ? '<b>Too early to project.</b> Come back after a week of data.'
+          : '<b>At this rate you finish at '+a.projected+' '+FD.esc(g.unit||'')+'</b> — '+
+            (a.projected>=Number(g.target)
+              ? 'which clears the target with '+Math.round((a.projected/Number(g.target)-1)*100)+'% to spare.'
+              : 'which is '+Math.round((1-a.projected/Number(g.target))*100)+'% short. You need '+a.needPerWeek+
+                ' '+FD.esc(g.unit||'')+' a week from here, up from '+a.perWeek+'.'))+
+      '</div>'+
+      (g.process?'<div class="proc"><span class="pill acc">Weekly process</span><span>'+FD.esc(g.process)+'</span></div>':'')+
+      (g.obstacle?'<div class="proc"><span class="pill due">Known obstacle</span><span>'+FD.esc(g.obstacle)+'</span></div>':'')+
+      '<div class="row" style="margin-top:13px;gap:7px">'+
+        '<button class="btn sm" onclick="bump(\''+g.id+'\',1)">+1</button>'+
+        '<button class="btn sm" onclick="bump(\''+g.id+'\',5)">+5</button>'+
+        '<button class="btn sm" onclick="bump(\''+g.id+'\',-1)">−1</button>'+
+        '<input type="number" value="'+FD.esc(g.current||0)+'" style="width:110px;padding:7px 10px;font-size:13px" '+
+          'onchange="setCurrent(\''+g.id+'\',this.value)"/>'+
+        '<span class="tiny">set exact value</span>'+
+      '</div>'+
+    '</div>';
+  }).join('') : '<div class="empty">No goals set. This is the most important twenty minutes you\'ll spend on this whole system — do it now.</div>';
+
+  document.getElementById('miles').innerHTML=[30,60,90,120].map(n=>{
+    const dk=FD.shift(pr.start,n-1), hit=pr.dayNo>=n;
+    return '<div class="msc'+(hit?' hit':'')+'"><div class="d">'+
+      FD.parseKey(dk).toLocaleDateString(undefined,{month:'short',day:'numeric'})+'</div>'+
+      '<div class="t">Day '+n+(hit?' ✓':'')+'</div></div>';
+  }).join('');
+}
+paint();
+</script>
+</body>
+</html>

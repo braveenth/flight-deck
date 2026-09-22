@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Study Flight — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .timerbox{border:1px solid var(--line);border-radius:var(--r);padding:18px;background:var(--panel2)}
+  .tlabel{text-align:center;color:var(--accent);font-size:11px;text-transform:uppercase;letter-spacing:.16em;font-weight:900}
+  .tclock{font-family:var(--mono);font-variant-numeric:tabular-nums;font-weight:800;
+    font-size:clamp(52px,11vw,80px);letter-spacing:-.05em;text-align:center;margin:8px 0 4px;line-height:1}
+  .tmeta{text-align:center;color:var(--muted);font-size:12px;margin-bottom:14px}
+  .tring{display:block;margin:0 auto}
+  body.cockpit .wrap>*:not(#cockpitZone){display:none}
+  body.cockpit .fdnav{display:none}
+  body.cockpit #cockpitZone{display:block;margin-top:6vh}
+  body.cockpit .tclock{font-size:clamp(84px,20vw,200px)}
+  body.cockpit .hideInCockpit{display:none}
+  .logrow{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13px;align-items:baseline}
+  .logrow:last-child{border:0}
+  .logrow .tm{font-family:var(--mono);font-size:11.5px;color:var(--faint);flex:none;width:62px}
+  .phase{border-left:2px solid var(--line);padding-left:14px;margin-left:3px}
+  .phase.active{border-color:var(--accent)}
+</style>
+</head>
+<body data-root=".." data-module="study">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker">✈️ Daily · the core of the whole system</div>
+    <h1>Study Flight</h1>
+    <div class="lede">No deciding. No perfect moment. Run the next action. Starting is the win — precision comes later.</div>
+  </div>
+
+  <div class="cols c4">
+    <div class="stat"><div class="n" id="mToday">0</div><div class="l">Minutes today</div><div class="bar thin" style="margin-top:9px"><i id="mBar"></i></div><div class="sm">Target 100 min</div></div>
+    <div class="stat"><div class="n" id="sToday">0</div><div class="l">Flights today</div><div class="sm" id="sAll">0 all-time</div></div>
+    <div class="stat"><div class="n" id="mWeek">0</div><div class="l">Minutes this week</div><div class="sm" id="wAvg">—</div></div>
+    <div class="stat"><div class="n" id="pctDone">0%</div><div class="l">Checklist complete</div><div class="bar thin good" style="margin-top:9px"><i id="cBar"></i></div></div>
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">⚡ Lowest-friction action</div>
+        <h2 style="font-size:23px">You only owe this page five minutes.</h2>
+        <p class="sub" style="margin-bottom:14px">Open yesterday's notes. Start the clock. Momentum can decide what happens after that.</p>
+        <div class="btnrow">
+          <button class="btn grad big" onclick="start(5)">▶ 5-MIN TAKEOFF</button>
+          <button class="btn big" onclick="start(25)">25 min</button>
+          <button class="btn big" onclick="start(50)">50 min</button>
+          <button class="btn big" onclick="start(90)">90 min</button>
+        </div>
+        <div class="field"><label>Today's target — the exact section, not the subject</label>
+          <input type="text" id="target" placeholder="Chapter 4 → §4.1, §4.2, §4.3"/></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">01 · Before takeoff</div>
+        <h2>Preflight</h2>
+        <p class="sub">Remove choices before you ask yourself to concentrate. Every one of these is a decision you won't have to make later.</p>
+        <div class="checklist" data-g="1">
+          <label class="check"><input type="checkbox"><span class="ctext">Phone in another room — not face-down, another room</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Water within reach</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Sitting at the study location</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Unrelated tabs closed</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Yesterday's notes open</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Reviewed those notes for 5 minutes</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Today's section open on screen</span></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">02 · Wheels up</div>
+        <h2>Takeoff</h2>
+        <p class="sub">The first four minutes are the only hard part. These rules exist to get you through them.</p>
+        <div class="checklist" data-g="2">
+          <label class="check"><input type="checkbox"><span class="ctext">Timer started</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Begin at the exact section above — not the start of the chapter</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">No reorganising the study system</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">No searching for a better place to start</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Confused? Mark <b>?</b> and keep going</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Mistake? Correct it and keep going</span></label>
+        </div>
+        <div class="note warn" style="margin-top:14px">
+          <b>Procrastination is mood repair, not laziness.</b> The urge to reorganise your notes is your brain
+          trading a small amount of future pain for immediate relief. Naming it is usually enough to break it.
+          <div class="cite" style="margin-top:8px"><b>Sirois &amp; Pychyl (2013), <i>Social and Personality Psychology
+          Compass</i> 7(2):115–127.</b></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">03 · Stay airborne</div>
+        <h2>Cruise</h2>
+        <p class="sub">Sections are the unit of accomplishment. Timers are the unit of focus. Don't confuse the two.</p>
+        <div class="checklist" data-g="3">
+          <label class="check"><input type="checkbox"><span class="ctext">Finish the current section</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext"><b>Close the book and write what it said from memory</b> — before checking</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Write 1–3 key takeaways below</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Turn one takeaway into a recall card</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">5-minute break — stand up, look far away</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Start the next section</span></label>
+        </div>
+        <div class="field"><label>Key takeaways</label>
+          <textarea id="takeaways" placeholder="1.&#10;2.&#10;3."></textarea></div>
+        <div class="note acc" style="margin-top:12px">
+          <b>Closing the book and retrieving beats rereading — by a lot.</b> Students who studied a passage once then
+          practised recall outperformed students who reread it four times, on a test a week later.
+          <div class="cite" style="margin-top:8px"><b>Roediger &amp; Karpicke (2006), <i>Psychological Science</i>
+          17(3):249–255.</b> · <b>Karpicke &amp; Blunt (2011), <i>Science</i> 331(6018):772–775</b> — retrieval practice
+          also beat elaborative concept mapping.</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">04 · Make tomorrow easy</div>
+        <h2>Landing</h2>
+        <p class="sub">A good landing removes tomorrow morning's first decision. This is the highest-leverage five minutes of the session.</p>
+        <div class="checklist" data-g="4">
+          <label class="check"><input type="checkbox"><span class="ctext">Write what I actually completed</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Mark unfinished material with →</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Choose the exact spot I start tomorrow</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Leave the correct tab / page open and ready</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext">Write tomorrow's first task below</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext"><b>SESSION COMPLETE ✓</b></span></label>
+        </div>
+        <div class="field"><label>Tomorrow's first task</label>
+          <input type="text" id="tomorrow" placeholder="Reread §4.3 summary, then start §4.4"/></div>
+      </section>
+
+    </div>
+
+    <div class="stack" id="rightCol">
+
+      <section class="card" id="cockpitZone">
+        <div class="kicker hideInCockpit">Live instrument</div>
+        <h2 class="hideInCockpit">Focus timer</h2>
+        <div class="timerbox">
+          <div class="tlabel" id="tLabel">READY</div>
+          <div class="tclock" id="tClock">25:00</div>
+          <div class="tmeta" id="tMeta">25-minute flight · +25 XP on landing</div>
+          <div class="btnrow grid2 hideInCockpit">
+            <button class="btn primary" onclick="start(25)">25 MIN</button>
+            <button class="btn" onclick="start(50)">50 MIN</button>
+            <button class="btn" onclick="start(90)">90 MIN</button>
+            <button class="btn" onclick="start(5)">5 MIN BREAK</button>
+            <button class="btn good" id="pauseBtn" onclick="toggle()">PAUSE</button>
+            <button class="btn danger" onclick="reset()">RESET</button>
+          </div>
+          <div class="btnrow" style="margin-top:9px">
+            <button class="btn wide" onclick="cockpit()" id="ckBtn">◉ COCKPIT MODE</button>
+          </div>
+        </div>
+        <div class="tiny hideInCockpit" style="margin-top:11px;text-align:center">
+          Press <b>Space</b> to pause/resume · <b>C</b> for cockpit mode
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Capture</div>
+        <h2>Send to Recall Bay</h2>
+        <p class="sub">The moment you understand something is the moment to turn it into a question. Future-you will be tested on it either way.</p>
+        <div class="field"><label>Question</label><input type="text" id="cq" placeholder="Why does X cause Y?"/></div>
+        <div class="field"><label>Answer</label><input type="text" id="ca" placeholder="Because…"/></div>
+        <button class="btn primary wide" style="margin-top:12px" onclick="capture()">+ Add card</button>
+        <div class="tiny" style="margin-top:9px" id="capCount"></div>
+      </section>
+
+      <section class="card warnc">
+        <div class="kicker warn">Emergency procedure</div>
+        <h2>🚨 Aborted takeoff</h2>
+        <p class="sub">If you catch yourself deciding, optimising, waiting, or worrying:</p>
+        <div class="note warn" style="font-size:16px;font-weight:850;line-height:1.7">
+          <b>STOP CHOOSING.</b><br><br>
+          1. Open yesterday's notes.<br>
+          2. Set five minutes.<br>
+          3. Start reading.
+        </div>
+        <a class="btn wide" href="firewall.html" style="margin-top:12px;display:block;text-align:center;text-decoration:none">🛡️ Open Firewall</a>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Session log</div>
+        <h2>Today's flights</h2>
+        <div id="log"><div class="empty">No flights logged yet today.</div></div>
+      </section>
+
+      <section class="card">
+        <h3>Reset</h3>
+        <p class="sub">The daily checklist clears automatically at midnight. Streak, XP and logs are kept.</p>
+        <button class="btn danger wide" onclick="clearToday()">Clear today's checklist</button>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const M='study';
+/* ---------- checklists (4 groups, one shared array) ---------- */
+const boxes=FD.$$('.checklist input[type=checkbox]');
+function loadChecks(){
+  const st=FD.mod(M).checks||[];
+  boxes.forEach((b,i)=>{ b.checked=!!st[i]; b.closest('.check').classList.toggle('done',b.checked); });
+  paintChecks();
+}
+function paintChecks(){
+  const done=boxes.filter(b=>b.checked).length;
+  const p=FD.pct(done,boxes.length);
+  document.getElementById('pctDone').textContent=p+'%';
+  document.getElementById('cBar').style.width=p+'%';
+}
+boxes.forEach((b,i)=>b.addEventListener('change',()=>{
+  b.closest('.check').classList.toggle('done',b.checked);
+  const cur=(FD.mod(M).checks||[]).slice(); const was=!!cur[i]; cur[i]=b.checked;
+  FD.setMod(M,{checks:cur});
+  if(b.checked&&!was) FD.addXP(2,'Checklist step');
+  paintChecks();
+  if(boxes.every(x=>x.checked)&&!FD.mod(M).fullDay){
+    FD.setMod(M,{fullDay:true}); FD.addXP(50,'Full study checklist'); FD.confetti(40);
+  }
+}));
+['target','takeaways','tomorrow'].forEach(f=>FD.bindField(document.getElementById(f),M,f));
+
+/* ---------- timer ---------- */
+let total=25*60, left=total, iv=null, running=false, mins=25, mode='READY', fired=false;
+const R=54, C=2*Math.PI*R;
+function draw(){
+  const m=String(Math.floor(left/60)).padStart(2,'0'), s=String(left%60).padStart(2,'0');
+  document.getElementById('tClock').textContent=m+':'+s;
+  document.getElementById('tLabel').textContent=mode;
+  document.title=(running?'⏱ '+m+':'+s+' — ':'')+'Study Flight';
+  document.getElementById('pauseBtn').textContent=running?'❚❚ PAUSE':(left<total&&left>0?'▶ RESUME':'❚❚ PAUSE');
+}
+function start(n){
+  clearInterval(iv); mins=n; total=n*60; left=total; fired=false; running=true;
+  mode = n===5?'BREAK':n>=90?'ULTRADIAN BLOCK':n>=50?'DEEP BLOCK':'FOCUS FLIGHT';
+  document.getElementById('tMeta').textContent = n===5
+    ? 'Break · stand up, look 20 feet away'
+    : n+'-minute flight · +'+xpFor(n)+' XP on landing';
+  iv=setInterval(tick,1000); draw();
+  FD.toast(mode+' started');
+}
+function xpFor(n){ return n===5?5:n>=90?90:n>=50?55:25; }
+function tick(){
+  if(!running) return;
+  left--; draw();
+  if(left<=0){ clearInterval(iv); iv=null; running=false; left=0; mode='COMPLETE'; draw(); land(); }
+}
+function land(){
+  if(fired) return; fired=true;
+  FD.chime(); FD.confetti(mins>=50?46:26);
+  if(mins===5){ FD.addXP(5,'Break taken'); return; }
+  const d=FD.mod(M);
+  const log=(d.log||[]).concat([{t:new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}),
+                                 mins:mins, what:(d.target||'').slice(0,80)}]);
+  FD.setMod(M,{minutes:(d.minutes||0)+mins, sessions:(d.sessions||0)+1, log:log});
+  FD.mutate(s=>{ s.records.totalMinutes=(s.records.totalMinutes||0)+mins;
+                 s.records.totalSessions=(s.records.totalSessions||0)+1; });
+  FD.addXP(xpFor(mins),mins+'-min flight landed');
+  stats(); paintLog();
+}
+function toggle(){
+  if(left<=0) return;
+  running=!running;
+  if(running&&!iv) iv=setInterval(tick,1000);
+  if(!running&&iv){ clearInterval(iv); iv=null; }
+  draw();
+}
+function reset(){ clearInterval(iv); iv=null; running=false; left=total=mins*60; fired=false; mode='READY'; draw(); }
+function cockpit(){
+  document.body.classList.toggle('cockpit');
+  const on=document.body.classList.contains('cockpit');
+  document.getElementById('ckBtn').textContent=on?'← EXIT COCKPIT':'◉ COCKPIT MODE';
+  if(on) window.scrollTo({top:0});
+}
+document.addEventListener('keydown',e=>{
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+  if(e.code==='Space'){ e.preventDefault(); toggle(); }
+  if(e.key.toLowerCase()==='c') cockpit();
+  if(e.key==='Escape'&&document.body.classList.contains('cockpit')) cockpit();
+});
+
+/* ---------- capture ---------- */
+function capture(){
+  const q=document.getElementById('cq').value.trim(), a=document.getElementById('ca').value.trim();
+  if(!q||!a){ FD.toast('⚠️ Need both a question and an answer'); return; }
+  FD.mutate(s=>{ s.cards.push({id:FD.uid(),q:q,a:a,deck:'Study Flight',due:FD.key(),
+                               ease:2.5,ivl:0,reps:0,lapses:0,created:FD.key()}); });
+  document.getElementById('cq').value=''; document.getElementById('ca').value='';
+  FD.addXP(4,'Card captured'); document.getElementById('cq').focus(); capCount();
+}
+function capCount(){
+  const n=(FD.read().cards||[]).length;
+  document.getElementById('capCount').textContent=n+' card'+(n===1?'':'s')+' in the deck · '+
+    (FD.read().cards||[]).filter(c=>c.due<=FD.key()).length+' due now';
+}
+
+/* ---------- stats + log ---------- */
+function stats(){
+  const d=FD.mod(M), s=FD.read();
+  document.getElementById('mToday').textContent=d.minutes||0;
+  document.getElementById('mBar').style.width=FD.pct(d.minutes||0,100)+'%';
+  document.getElementById('sToday').textContent=d.sessions||0;
+  document.getElementById('sAll').textContent=(s.records.totalSessions||0)+' all-time · '+
+    Math.round((s.records.totalMinutes||0)/60)+'h total';
+  let wk=0,n=0;
+  FD.lastDays(7).forEach(k=>{ const m=((s.days[k]||{}).mods||{}).study; if(m&&m.minutes){wk+=m.minutes;n++;} });
+  document.getElementById('mWeek').textContent=wk;
+  document.getElementById('wAvg').textContent=n?Math.round(wk/n)+' min on active days':'—';
+}
+function paintLog(){
+  const log=FD.mod(M).log||[];
+  document.getElementById('log').innerHTML = log.length
+    ? log.map(l=>'<div class="logrow"><span class="tm">'+FD.esc(l.t)+'</span>'+
+        '<span><b>'+l.mins+' min</b>'+(l.what?' · '+FD.esc(l.what):'')+'</span></div>').join('')
+    : '<div class="empty">No flights logged yet today.</div>';
+}
+function clearToday(){
+  if(!confirm("Clear today's checklist and notes? Your minutes, streak and XP stay.")) return;
+  FD.setMod(M,{checks:[],fullDay:false});
+  boxes.forEach(b=>{ b.checked=false; b.closest('.check').classList.remove('done'); });
+  paintChecks(); FD.toast('Checklist cleared');
+}
+loadChecks(); stats(); paintLog(); capCount(); draw();
+</script>
+</body>
+</html>

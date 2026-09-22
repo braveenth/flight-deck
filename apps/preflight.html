@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Preflight — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .steps{display:flex;gap:5px;margin:18px 0 22px}
+  .steps i{flex:1;height:5px;border-radius:999px;background:var(--line);transition:.3s}
+  .steps i.on{background:linear-gradient(90deg,var(--accent),var(--accent2))}
+  .step{display:none;animation:fdpop .25s ease}
+  .step.show{display:block}
+  .stepno{font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent);font-weight:900}
+  .step h2{font-size:clamp(22px,3.6vw,30px);margin:8px 0 8px;letter-spacing:-.035em;line-height:1.15}
+  .step .why{color:var(--muted);font-size:14px;line-height:1.6;max-width:62ch}
+  .nav{display:flex;gap:10px;margin-top:22px;align-items:center}
+  .ifthen{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;margin-top:9px}
+  .ifthen .w{font-weight:900;font-size:12px;letter-spacing:.1em;color:var(--accent);text-transform:uppercase}
+  .done-card{text-align:center;padding:36px 22px}
+  .done-card .big{font-size:52px}
+  .recap{text-align:left;margin-top:20px}
+  .recap div{padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+  .recap div:last-child{border:0}
+  .recap b{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.13em;display:block;margin-bottom:3px}
+</style>
+</head>
+<body data-root=".." data-module="preflight">
+<div class="wrap wrap-narrow">
+
+  <div class="phead">
+    <div class="kicker">🌅 Daily · Morning · ~4 minutes</div>
+    <h1>Preflight</h1>
+    <div class="lede">You are not deciding what to do today. You are removing the decisions before they can cost you anything.</div>
+  </div>
+
+  <div class="steps" id="steps"></div>
+
+  <section class="card">
+
+    <!-- 1 -->
+    <div class="step" data-i="0">
+      <div class="stepno">Step 1 of 6 · Wake protocol</div>
+      <h2>Set the machine before you set the plan.</h2>
+      <p class="why">Do these before you look at a feed. Morning outdoor light is the strongest signal your circadian clock takes, and it sets tonight's sleep as much as this morning's alertness.</p>
+      <div class="checklist" id="wake" style="margin-top:18px">
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Daylight on my face</b> — outside or at a window, 5–10 minutes</span></label>
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Full glass of water</b></span></label>
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Move for two minutes</b> — walk, stretch, anything</span></label>
+        <label class="check"><input type="checkbox"><span class="ctext"><b>No feed, no inbox yet</b> — the first input of the day is mine to choose</span></label>
+        <label class="check"><input type="checkbox"><span class="ctext"><b>Phone on Do Not Disturb</b></span></label>
+      </div>
+      <div class="cite"><b>Wright et al. (2013), <i>Current Biology</i> 23(16):1554–1558.</b> A week of natural light exposure
+        advanced circadian timing by ~2 hours and locked melatonin onset to sunset — indoor-only light did not.</div>
+    </div>
+
+    <!-- 2 -->
+    <div class="step" data-i="1">
+      <div class="stepno">Step 2 of 6 · Identity</div>
+      <h2>Who are you being today?</h2>
+      <p class="why">Goals framed as identity survive bad days better than goals framed as tasks. You are not trying to
+        study today. You are being the kind of person who studies, and today is just evidence.</p>
+      <div class="field">
+        <label>Today I am the kind of person who…</label>
+        <input type="text" id="identity" placeholder="…starts before they feel ready."/>
+      </div>
+      <div class="note acc" style="margin-top:14px">
+        <b>Make it a verb you can be caught doing.</b> “Someone who is disciplined” is not checkable.
+        “Someone who opens the book before the phone” is.
+      </div>
+      <div class="cite"><b>Oyserman, Bybee &amp; Terry (2006), <i>JPSP</i> 91(1):188–204.</b> An intervention linking
+        academic effort to students’ possible future selves improved grades, attendance and behaviour over two years.</div>
+    </div>
+
+    <!-- 3 -->
+    <div class="step" data-i="2">
+      <div class="stepno">Step 3 of 6 · Targets</div>
+      <h2>Three outcomes. Not a task list.</h2>
+      <p class="why">Specific and hard beats vague and easy — but only when the goal is something you can actually
+        finish today. Write outcomes you could hold up at 9pm and say “that happened” or “it didn’t.”</p>
+      <div class="field"><label>① The one that matters most</label><input type="text" id="o1" placeholder="Finish §4.2 and §4.3 with notes written"/></div>
+      <div class="field"><label>② Second</label><input type="text" id="o2" placeholder=""/></div>
+      <div class="field"><label>③ Third</label><input type="text" id="o3" placeholder=""/></div>
+      <div class="cite"><b>Locke &amp; Latham (2002), <i>American Psychologist</i> 57(9):705–717.</b> 35 years of research:
+        specific, difficult goals produce higher performance than “do your best,” across 100+ tasks.</div>
+    </div>
+
+    <!-- 4 -->
+    <div class="step" data-i="3">
+      <div class="stepno">Step 4 of 6 · WOOP</div>
+      <h2>Name the obstacle before it names you.</h2>
+      <p class="why">Positive visualisation alone slightly <i>reduces</i> effort. Contrasting the wish against the real
+        internal obstacle, then pre-loading an if-then response, is the version that works.</p>
+      <div class="field"><label>W · Wish — what do you want from today’s #1?</label><input type="text" id="wish"/></div>
+      <div class="field"><label>O · Outcome — what does it feel like when it’s done?</label><input type="text" id="outcome"/></div>
+      <div class="field"><label>O · Obstacle — the honest internal one. Not “no time.”</label>
+        <input type="text" id="obstacle" placeholder="I'll open my phone the moment it gets hard"/></div>
+      <div class="field">
+        <label>P · Plan — the if-then</label>
+        <div class="ifthen"><span class="w">If</span><input type="text" id="planIf" placeholder="I reach for my phone mid-section"/></div>
+        <div class="ifthen"><span class="w">Then</span><input type="text" id="planThen" placeholder="I put it face-down in the next room and reread the last paragraph"/></div>
+      </div>
+      <div class="cite"><b>Gollwitzer &amp; Sheeran (2006), <i>Advances in Experimental Social Psychology</i> 38:69–119.</b>
+        Meta-analysis of 94 studies, 8,461 participants: if-then implementation intentions had a medium-to-large effect
+        on goal attainment (d = 0.65) over goal intentions alone. · <b>Oettingen (2012), <i>European Review of Social
+        Psychology</i> 23(1):1–63</b> for mental contrasting.</div>
+    </div>
+
+    <!-- 5 -->
+    <div class="step" data-i="4">
+      <div class="stepno">Step 5 of 6 · When and where</div>
+      <h2>An unscheduled goal is a wish.</h2>
+      <p class="why">The single biggest predictor of whether these three happen is whether they have a time and a place
+        attached right now. Be concrete: a clock time and a physical location.</p>
+      <div class="field"><label>① <span id="lab1" class="muted"></span></label><input type="text" id="t1" placeholder="9:30am · desk, door closed"/></div>
+      <div class="field"><label>② <span id="lab2" class="muted"></span></label><input type="text" id="t2" placeholder="1:00pm · library"/></div>
+      <div class="field"><label>③ <span id="lab3" class="muted"></span></label><input type="text" id="t3" placeholder="6:00pm · kitchen table"/></div>
+      <div class="field"><label>The very first physical action, in the next 15 minutes</label>
+        <input type="text" id="first" placeholder="Open the PDF to page 61 and read one paragraph"/></div>
+    </div>
+
+    <!-- 6 -->
+    <div class="step" data-i="5">
+      <div class="stepno">Step 6 of 6 · Commit</div>
+      <h2>Lock the flight plan.</h2>
+      <p class="why">Once you commit, this becomes the day Mission Control and tonight’s Debrief score you against.
+        You can change it — but you have to change it deliberately, which is the whole point.</p>
+      <div class="recap" id="recap"></div>
+      <button class="btn grad big wide" id="commit" style="margin-top:20px">✓ COMMIT TO TODAY — +40 XP</button>
+    </div>
+
+    <!-- done -->
+    <div class="step" data-i="6">
+      <div class="done-card">
+        <div class="big">🛫</div>
+        <h2 style="margin-top:10px">Cleared for takeoff.</h2>
+        <p class="why" style="margin:0 auto">Your first action is below. Do that one thing and the rest of the day
+          gets easier, because you'll no longer be negotiating with yourself.</p>
+        <div class="note acc" style="margin-top:20px;font-size:16px;font-weight:800" id="firstEcho"></div>
+        <div class="btnrow grid2" style="margin-top:18px">
+          <a class="btn primary" href="../apps/study.html" style="text-decoration:none;text-align:center">✈️ Start Study Flight</a>
+          <a class="btn" href="../index.html" style="text-decoration:none;text-align:center">← Mission Control</a>
+        </div>
+        <button class="btn ghost sm" style="margin-top:14px" onclick="go(0)">Edit today’s plan</button>
+      </div>
+    </div>
+
+    <div class="nav" id="nav">
+      <button class="btn" id="back">← Back</button>
+      <button class="btn primary right" id="next">Next →</button>
+    </div>
+  </section>
+
+  <div class="note" style="margin-top:16px">
+    <b>Why this order?</b> Body first (light, water, movement), then identity, then targets, then obstacles, then
+    scheduling. Every step narrows the space until only one action is left — the one you're about to do.
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const M='preflight', TOTAL=6;
+const FIELDS=['identity','o1','o2','o3','wish','outcome','obstacle','planIf','planThen','t1','t2','t3','first'];
+let step=0;
+
+FD.bindChecks(document.getElementById('wake'),M,null,3);
+FIELDS.forEach(f=>FD.bindField(document.getElementById(f),M,f));
+
+function d(){ return FD.mod(M); }
+function paintSteps(){
+  document.getElementById('steps').innerHTML=
+    Array.from({length:TOTAL},(_,i)=>'<i class="'+(i<=step?'on':'')+'"></i>').join('');
+}
+function go(i){
+  step=Math.max(0,Math.min(TOTAL,i));
+  FD.$$('.step').forEach(s=>s.classList.toggle('show',+s.dataset.i===step));
+  paintSteps();
+  document.getElementById('nav').style.display=step>=TOTAL?'none':'flex';
+  document.getElementById('back').style.visibility=step===0?'hidden':'visible';
+  document.getElementById('next').style.display=step===TOTAL-1?'none':'block';
+  if(step===4) labels();
+  if(step===5) recap();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function labels(){
+  const v=d();
+  ['1','2','3'].forEach(n=>{
+    const el=document.getElementById('lab'+n);
+    el.textContent=v['o'+n]?'— '+v['o'+n]:'— (no outcome written)';
+  });
+}
+function recap(){
+  const v=d();
+  const row=(l,x)=>'<div><b>'+l+'</b>'+FD.esc(x||'—')+'</div>';
+  document.getElementById('recap').innerHTML=
+    row('Identity','I am the kind of person who '+(v.identity||'…'))+
+    row('① '+(v.t1||'unscheduled'),v.o1)+
+    row('② '+(v.t2||'unscheduled'),v.o2)+
+    row('③ '+(v.t3||'unscheduled'),v.o3)+
+    row('If → Then',(v.planIf||'—')+'  →  '+(v.planThen||'—'))+
+    row('First action, right now',v.first);
+}
+document.getElementById('next').onclick=()=>go(step+1);
+document.getElementById('back').onclick=()=>go(step-1);
+document.getElementById('commit').onclick=()=>{
+  const v=d();
+  if(!v.o1){ FD.toast('⚠️ Write at least your #1 outcome'); go(2); return; }
+  if(!v.committed){ FD.setMod(M,{committed:true}); FD.addXP(40,'Preflight committed'); FD.confetti(30); FD.chime(); }
+  else FD.toast('Flight plan updated');
+  echo(); go(6);
+};
+function echo(){
+  const v=d();
+  document.getElementById('firstEcho').textContent=v.first||v.o1||'Open the thing and give it five minutes.';
+}
+if(d().committed){ echo(); go(6); } else go(0);
+</script>
+</body>
+</html>

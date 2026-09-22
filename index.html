@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Flight Deck — Mission Control</title>
+<link rel="stylesheet" href="assets/core.css?v=1"/>
+<style>
+  .hero{
+    display:grid;grid-template-columns:1fr auto;gap:22px;align-items:center;padding:26px;
+    border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));border-radius:22px;
+    background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 12%,transparent),color-mix(in srgb,var(--accent2) 9%,transparent) 60%,transparent),var(--panel);
+    box-shadow:var(--shadow)
+  }
+  .hero h2{font-size:clamp(21px,3.4vw,29px);margin:0 0 7px;letter-spacing:-.035em;line-height:1.15}
+  .hero p{margin:0;color:var(--muted);font-size:14.5px;line-height:1.55;max-width:56ch}
+  .hero .btn{min-width:230px}
+  .rings{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .ringcell{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 10px;text-align:center}
+  .ringcell .cap{font-size:9.5px;text-transform:uppercase;letter-spacing:.14em;font-weight:900;color:var(--muted);margin-top:9px}
+  .ringcell .det{font-size:10.5px;color:var(--faint);margin-top:2px}
+  .modcard{
+    display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--text);
+    border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:16px;transition:.16s
+  }
+  .modcard:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+  .modcard .top{display:flex;align-items:center;gap:9px}
+  .modcard .ic{font-size:19px}
+  .modcard .nm{font-weight:900;letter-spacing:-.015em;font-size:15px}
+  .modcard .bl{color:var(--muted);font-size:12.5px;line-height:1.45}
+  .modcard .ft{display:flex;align-items:center;gap:7px;margin-top:6px;flex-wrap:wrap}
+  .modgrid2{display:grid;grid-template-columns:repeat(auto-fill,minmax(255px,1fr));gap:12px}
+  .plan{display:grid;gap:8px}
+  .planrow{
+    display:flex;align-items:center;gap:11px;padding:11px 13px;border:1px solid var(--line);
+    border-radius:var(--r-sm);background:var(--panel2);text-decoration:none;color:var(--text);transition:.15s
+  }
+  .planrow:hover{border-color:var(--accent);transform:translateX(2px)}
+  .planrow .dot{width:9px;height:9px;border-radius:50%;background:var(--line2);flex:none}
+  .planrow.on .dot{background:var(--good);box-shadow:0 0 0 3px color-mix(in srgb,var(--good) 22%,transparent)}
+  .planrow .lbl{font-weight:800;font-size:13.5px}
+  .planrow .st{margin-left:auto;font-size:11px;color:var(--muted);font-weight:800;text-align:right}
+  .planrow.on .lbl{color:var(--muted)}
+  @media(max-width:640px){.hero{grid-template-columns:1fr}.hero .btn{width:100%}.rings{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body data-root="." data-module="">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker" id="clock">— </div>
+    <h1 id="greeting">Mission Control</h1>
+    <div class="lede" id="lede">Everything you run today, on one screen. Open this first in the morning and last at night.</div>
+  </div>
+
+  <section class="hero" id="hero">
+    <div>
+      <div class="kicker">⚡ <span id="heroKicker">Next action</span></div>
+      <h2 id="heroTitle">Loading…</h2>
+      <p id="heroBody"></p>
+    </div>
+    <a class="btn grad big" id="heroBtn" href="apps/preflight.html">▶ START</a>
+  </section>
+
+  <div class="note warn" id="missWarn" style="display:none;margin-top:16px">
+    <b>You missed yesterday.</b> The rule is never miss twice — a single lapse doesn't measurably
+    slow habit formation, two in a row does. Do the smallest version of today's plan and the streak survives.
+  </div>
+
+  <div class="cols c4" style="margin-top:16px">
+    <div class="stat">
+      <div class="n" id="sRank">Cadet</div>
+      <div class="l">Level <span id="sLevel">1</span> · <span id="sXp">0</span> XP</div>
+      <div class="bar thin" style="margin-top:9px"><i id="sXpBar"></i></div>
+      <div class="sm"><span id="sNeed">125</span> XP to next level</div>
+    </div>
+    <div class="stat">
+      <div class="n">🔥 <span id="sStreak">0</span></div>
+      <div class="l">Day streak</div>
+      <div class="sm" id="sFreeze">Best: 0 · Freezes: 0</div>
+    </div>
+    <div class="stat">
+      <div class="n"><span id="sDayNo">1</span><span class="muted" style="font-size:15px">/120</span></div>
+      <div class="l">Program day</div>
+      <div class="bar thin good" style="margin-top:9px"><i id="sDayBar"></i></div>
+      <div class="sm"><span id="sLeft">119</span> days left · ends <span id="sEnd">—</span></div>
+    </div>
+    <div class="stat">
+      <div class="n" id="sToday">0 XP</div>
+      <div class="l">Earned today</div>
+      <div class="sm" id="sPace">—</div>
+    </div>
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card">
+        <div class="kicker">Today</div>
+        <h2>Flight plan</h2>
+        <p class="sub">Green means done. Tap any row to go straight there.</p>
+        <div class="plan" id="plan"></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Daily balance</div>
+        <h2>Four systems</h2>
+        <p class="sub">A day that closes all four rings is a day that compounds. Partial credit still counts.</p>
+        <div class="rings" id="rings"></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">All modules</div>
+        <h2>The deck</h2>
+        <p class="sub">Twelve instruments. You do not need all of them every day — the flight plan above tells you which.</p>
+        <div class="modgrid2" id="mods"></div>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">Your 120 days</div>
+        <h2 id="goalTitle">No flight plan set</h2>
+        <p class="sub" id="goalSub">Define what these four months are actually for. Specific, difficult goals beat “do your best.”</p>
+        <div id="goalList"></div>
+        <a class="btn wide primary" href="apps/flightplan.html" style="margin-top:12px;display:block;text-align:center;text-decoration:none">🎯 Open Flight Plan</a>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Consistency</div>
+        <h2>Last 120 days</h2>
+        <p class="sub">Recorded progress is the version of tracking that actually moves outcomes.</p>
+        <div class="scrollx"><div class="heat" id="heat"></div></div>
+        <div class="row" style="margin-top:11px;font-size:10.5px;color:var(--faint)">
+          <span>Quiet</span>
+          <span class="heat" style="grid-auto-flow:column;grid-template-rows:1fr">
+            <i></i><i data-l="1"></i><i data-l="2"></i><i data-l="3"></i><i data-l="4"></i><i data-l="5"></i>
+          </span>
+          <span>Full send</span>
+          <span class="right mono" id="heatStat"></span>
+        </div>
+        <div class="cite"><b>Harkin et al. (2016), <i>Psychological Bulletin</i> 142(2):198–229.</b>
+          Meta-analysis of 138 studies: monitoring goal progress reliably increases goal attainment,
+          and the effect is larger when progress is physically recorded.</div>
+      </section>
+
+      <section class="card">
+        <div class="kicker muted">Operating rule</div>
+        <h2>When you stall</h2>
+        <div class="note acc" style="font-size:15px;font-weight:800;line-height:1.6">
+          Do not look for the perfect time.<br>
+          Do not rebuild the system.<br>
+          Open the next thing and give it five minutes.
+        </div>
+        <div class="tiny" style="margin-top:11px">
+          Five minutes is not a motivational trick — it removes the decision, which is the part that
+          actually costs you. <a href="evidence.html">See the evidence log →</a>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>Data</h3>
+        <p class="sub">Everything lives in this browser only. Back it up weekly.</p>
+        <div class="btnrow grid2">
+          <button class="btn" onclick="FD.exportJSON()">⬇ Export</button>
+          <button class="btn" onclick="document.getElementById('imp').click()">⬆ Import</button>
+        </div>
+        <input type="file" id="imp" accept="application/json" style="display:none"/>
+        <div class="tiny" style="margin-top:10px">Import replaces everything. Export first.</div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="assets/core.js?v=1"></script>
+<script>
+/* ---------- greeting + hero routing ---------- */
+function refresh(){
+  const now=new Date(), h=now.getHours();
+  document.getElementById('clock').textContent=
+    now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
+
+  const pre=FD.mod('preflight').committed, deb=FD.mod('debrief').committed;
+  const g = h<5?'Still up':h<12?'Good morning':h<17?'Good afternoon':h<21?'Good evening':'Winding down';
+  document.getElementById('greeting').textContent=g+'.';
+
+  const studyMin=FD.mod('study').minutes||0;
+  let hero;
+  if(h>=20 || h<5){
+    hero = deb
+      ? {k:'Day closed',t:'Debrief is done. Park the plane.',b:'Screens down, room dark and cool. Sleep is when today’s studying is actually written to disk (Rasch & Born, 2013).',bt:'🌙 Reopen Debrief',u:'apps/debrief.html'}
+      : {k:'Last thing tonight',t:'Run the Debrief before bed.',b:'Score the day, write three good things, and choose tomorrow’s first move so the morning has no decision in it.',bt:'🌙 Run Debrief',u:'apps/debrief.html'};
+  } else if(!pre && h<12){
+    hero = {k:'First thing today',t:'Run Preflight. It takes four minutes.',b:'Name who you’re being today, pick three outcomes, and write an if-then plan for the one obstacle you already know is coming.',bt:'🌅 Run Preflight',u:'apps/preflight.html'};
+  } else if(studyMin<25){
+    hero = {k:'Lowest-friction action',t:'You only owe this page five minutes.',b:'Open the section you left off at and start the timer. Momentum decides what happens after that — you don’t have to.',bt:'✈️ Start Study Flight',u:'apps/study.html'};
+  } else {
+    const due=dueCards();
+    hero = due>0
+      ? {k:'Highest yield left today',t:due+' card'+(due===1?'':'s')+' due for recall.',b:'Retrieval practice beats rereading by a wide margin, and the spacing is doing most of the work.',bt:'🧠 Open Recall Bay',u:'apps/recall.html'}
+      : {k:'Keep the streak honest',t:'Core work is done. Take the easy wins.',b:'Five minutes of breathing, your habit checklist, and the body log. Small closes count as closes.',bt:'⚙️ Open Habit Reactor',u:'apps/habits.html'};
+  }
+  document.getElementById('heroKicker').textContent=hero.k;
+  document.getElementById('heroTitle').textContent=hero.t;
+  document.getElementById('heroBody').textContent=hero.b;
+  const hb=document.getElementById('heroBtn'); hb.textContent=hero.bt; hb.href=hero.u;
+
+  /* ---------- stat strip ---------- */
+  const li=FD.levelInfo(), pr=FD.program(), s=FD.read();
+  document.getElementById('sRank').textContent=li.rank;
+  document.getElementById('sLevel').textContent=li.level;
+  document.getElementById('sXp').textContent=li.xp.toLocaleString();
+  document.getElementById('sXpBar').style.width=li.pct+'%';
+  document.getElementById('sNeed').textContent=li.need.toLocaleString();
+  document.getElementById('sStreak').textContent=FD.streak();
+  document.getElementById('sFreeze').textContent='Best: '+(s.records.bestStreak||0)+' · Freezes: '+(s.freezes||0);
+  document.getElementById('sDayNo').textContent=pr.dayNo;
+  document.getElementById('sDayBar').style.width=pr.pct+'%';
+  document.getElementById('sLeft').textContent=pr.left;
+  document.getElementById('sEnd').textContent=FD.parseKey(pr.end).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+  const td=FD.day().xp||0;
+  document.getElementById('sToday').textContent=td+' XP';
+  const days=Object.values(s.days).filter(d=>d.xp>0).length;
+  document.getElementById('sPace').textContent=days?Math.round(s.xp/days)+' XP/day average':'First day — go earn some';
+
+  document.getElementById('missWarn').style.display=FD.missedYesterday()?'block':'none';
+
+  paintPlan(); paintRings(); paintMods(); paintHeat(); paintGoals();
+}
+
+/* ---------- module status ---------- */
+function dueCards(){
+  const t=FD.key();
+  return (FD.read().cards||[]).filter(c=>!c.due||c.due<=t).length;
+}
+function habitStats(){
+  const hs=FD.read().habits||[], done=FD.mod('habits').done||{};
+  const act=hs.filter(h=>!h.archived);
+  return {total:act.length, done:act.filter(h=>done[h.id]).length};
+}
+function bodyScore(){
+  const b=FD.mod('body'); let n=0;
+  if(b.sleepHours) n++; if(b.trainMin) n++; if(b.movement) n++; if(b.sunlight) n++;
+  return {n, total:4};
+}
+function statusOf(id){
+  const m=id=>FD.mod(id);
+  switch(id){
+    case 'preflight': return m('preflight').committed?{t:'Committed',on:1}:{t:'Not run',on:0};
+    case 'study':{const x=m('study').minutes||0;return {t:x?x+' min focused':'No blocks yet',on:x>=25?1:0};}
+    case 'recall':{const d=dueCards(),r=m('recall').reviewed||0;
+      return d>0?{t:d+' due',on:0,due:1}:{t:r?r+' reviewed · queue clear':'Queue clear',on:r?1:0};}
+    case 'habits':{const h=habitStats();return h.total?{t:h.done+'/'+h.total+' done',on:h.done===h.total?1:0}:{t:'No habits set',on:0};}
+    case 'body':{const b=bodyScore();return {t:b.n+'/4 logged',on:b.n>=3?1:0};}
+    case 'mind':{const x=m('mind').sessions||0;return {t:x?x+' session'+(x===1?'':'s'):'Not run',on:x>0?1:0};}
+    case 'firewall':{const u=(FD.read().urges||[]).filter(u=>u.date===FD.key());
+      return u.length?{t:u.filter(x=>x.won).length+'/'+u.length+' urges beaten',on:1}:{t:'No urges logged',on:0};}
+    case 'debrief': return m('debrief').committed?{t:'Day closed',on:1}:{t:'Not run',on:0};
+    case 'weekly':{const w=FD.read().weeks||{};const wk=FD.weekKey();
+      return w[wk]&&w[wk].committed?{t:'This week reviewed',on:1}:{t:(new Date().getDay()===0?'Due today':'Due Sunday'),on:0,due:new Date().getDay()===0?1:0};}
+    case 'flightplan':{const g=(FD.read().goals||[]).length;return g?{t:g+' goal'+(g===1?'':'s')+' active',on:1}:{t:'Not set',on:0,due:1};}
+    case 'recorder': return {t:'View trends',on:-1};
+    case 'evidence': return {t:'33 citations',on:-1};
+  }
+  return {t:'',on:-1};
+}
+
+/* ---------- today's plan ---------- */
+const PLAN=[
+  {id:'preflight',lbl:'Preflight — set the day'},
+  {id:'study',    lbl:'Study Flight — one focus block minimum'},
+  {id:'recall',   lbl:'Recall Bay — clear the due queue'},
+  {id:'habits',   lbl:'Habit Reactor — check off the dailies'},
+  {id:'body',     lbl:'Airframe — log sleep, training, light'},
+  {id:'mind',     lbl:'Cabin Pressure — five minutes of breathing'},
+  {id:'debrief',  lbl:'Debrief — close the day'}
+];
+function paintPlan(){
+  const sun=new Date().getDay()===0;
+  const rows=PLAN.concat(sun?[{id:'weekly',lbl:'Weekly Debrief — it’s Sunday'}]:[]);
+  document.getElementById('plan').innerHTML=rows.map(r=>{
+    const st=statusOf(r.id), m=FD.MODULES.find(x=>x.id===r.id);
+    return '<a class="planrow'+(st.on===1?' on':'')+'" href="'+m.file+'">'+
+      '<span class="dot"></span><span class="lbl">'+m.icon+'  '+FD.esc(r.lbl)+'</span>'+
+      '<span class="st">'+FD.esc(st.t)+'</span></a>';
+  }).join('');
+}
+
+/* ---------- rings ---------- */
+function ring(pct,label,detail,color){
+  const R=27,C=2*Math.PI*R,off=C*(1-Math.min(1,pct/100));
+  return '<div class="ringcell"><div class="ring-wrap">'+
+    '<svg width="72" height="72" viewBox="0 0 72 72">'+
+      '<circle cx="36" cy="36" r="'+R+'" fill="none" stroke="var(--line)" stroke-width="7"/>'+
+      '<circle cx="36" cy="36" r="'+R+'" fill="none" stroke="'+color+'" stroke-width="7" stroke-linecap="round" '+
+      'stroke-dasharray="'+C.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 36 36)"/>'+
+    '</svg>'+
+    '<div class="val"><div class="b">'+Math.round(pct)+'</div></div>'+
+    '</div><div class="cap">'+label+'</div><div class="det">'+detail+'</div></div>';
+}
+function paintRings(){
+  const sm=FD.mod('study').minutes||0, h=habitStats(), b=bodyScore();
+  const mindOk=(FD.mod('mind').sessions||0)>0, debOk=!!FD.mod('debrief').committed;
+  const craft=FD.pct(sm,100);
+  const order=h.total?FD.pct(h.done,h.total):0;
+  const body=FD.pct(b.n,b.total);
+  const mind=(mindOk?50:0)+(debOk?50:0);
+  document.getElementById('rings').innerHTML=
+    ring(craft,'Craft',sm+' / 100 min','var(--accent)')+
+    ring(order,'Order',h.done+' / '+(h.total||0)+' habits','var(--accent2)')+
+    ring(body,'Body',b.n+' / 4 logged','var(--good)')+
+    ring(mind,'Mind',(mindOk?'breath ✓':'breath —')+' · '+(debOk?'debrief ✓':'debrief —'),'var(--warn)');
+}
+
+/* ---------- module grid ---------- */
+function paintMods(){
+  document.getElementById('mods').innerHTML=FD.MODULES.map(m=>{
+    const st=statusOf(m.id);
+    const cls=st.on===1?'pill on':st.due?'pill due':st.on===0?'pill off':'pill acc';
+    return '<a class="modcard" href="'+m.file+'">'+
+      '<div class="top"><span class="ic">'+m.icon+'</span><span class="nm">'+m.name+'</span></div>'+
+      '<div class="bl">'+FD.esc(m.blurb)+'</div>'+
+      '<div class="ft"><span class="'+cls+'">'+FD.esc(st.t)+'</span>'+
+      '<span class="pill off">'+FD.esc(m.cadence)+'</span></div></a>';
+  }).join('');
+}
+
+/* ---------- heatmap ---------- */
+function paintHeat(){
+  const days=FD.lastDays(119), s=FD.read(), t=FD.key();
+  let active=0, best=0;
+  document.getElementById('heat').innerHTML=days.map(k=>{
+    const xp=(s.days[k]&&s.days[k].xp)||0;
+    if(xp>0) active++; best=Math.max(best,xp);
+    const l=xp===0?0:xp<40?1:xp<90?2:xp<160?3:xp<250?4:5;
+    return '<i data-l="'+l+'"'+(k===t?' data-today="1"':'')+' title="'+k+' · '+xp+' XP"></i>';
+  }).join('');
+  document.getElementById('heatStat').textContent=active+' active days · best '+best+' XP';
+}
+
+/* ---------- goals ---------- */
+function paintGoals(){
+  const gs=FD.read().goals||[];
+  if(!gs.length){ document.getElementById('goalList').innerHTML=''; return; }
+  document.getElementById('goalTitle').textContent='Your 120-day targets';
+  document.getElementById('goalSub').textContent='Progress toward what these four months are actually for.';
+  document.getElementById('goalList').innerHTML=gs.map(g=>{
+    const p=FD.pct(Number(g.current||0)-Number(g.start||0),Number(g.target||1)-Number(g.start||0));
+    return '<div style="margin-bottom:13px">'+
+      '<div class="row" style="gap:7px;margin-bottom:6px"><b style="font-size:13.5px">'+FD.esc(g.title)+'</b>'+
+      '<span class="right mono muted" style="font-size:11.5px">'+FD.esc(g.current||0)+' / '+FD.esc(g.target)+' '+FD.esc(g.unit||'')+'</span></div>'+
+      '<div class="bar thin"><i style="width:'+p+'%"></i></div></div>';
+  }).join('');
+}
+
+document.getElementById('imp').addEventListener('change',e=>{
+  if(e.target.files[0]) FD.importJSON(e.target.files[0],ok=>ok&&location.reload());
+});
+document.addEventListener('fd:xp',refresh);
+refresh();
+setInterval(refresh,60000);
+</script>
+</body>
+</html>

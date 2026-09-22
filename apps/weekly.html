@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Weekly Debrief — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .score{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px}
+  .sc{background:var(--panel2);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px}
+  .sc .n{font-size:22px;font-weight:900;letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+  .sc .l{font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--muted);font-weight:900;margin-top:4px}
+  .sc .d{font-size:11px;font-weight:900;margin-top:5px}
+  .sc .d.up{color:var(--good)} .sc .d.dn{color:var(--danger)} .sc .d.fl{color:var(--faint)}
+  .wkbar{display:flex;gap:4px;margin-top:14px}
+  .wkbar div{flex:1;text-align:center}
+  .wkbar .b{height:56px;background:var(--line);border-radius:5px;position:relative;overflow:hidden}
+  .wkbar .b i{position:absolute;bottom:0;left:0;right:0;background:linear-gradient(180deg,var(--accent),var(--accent2));border-radius:5px}
+  .wkbar .d{font-size:9.5px;color:var(--muted);margin-top:5px;font-weight:900;letter-spacing:.08em}
+  .wkbar .v{font-size:10px;color:var(--faint);font-family:var(--mono)}
+  .verdict{padding:20px;border-radius:var(--r);font-size:16px;line-height:1.6;font-weight:750}
+  .verdict.good{background:color-mix(in srgb,var(--good) 10%,var(--panel2));border:1px solid color-mix(in srgb,var(--good) 38%,var(--line))}
+  .verdict.mid{background:color-mix(in srgb,var(--warn) 9%,var(--panel2));border:1px solid color-mix(in srgb,var(--warn) 38%,var(--line))}
+  .verdict.bad{background:color-mix(in srgb,var(--danger) 8%,var(--panel2));border:1px solid color-mix(in srgb,var(--danger) 34%,var(--line))}
+</style>
+</head>
+<body data-root=".." data-module="weekly">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker">📋 Weekly · Sunday · ~12 minutes</div>
+    <h1>Weekly Debrief</h1>
+    <div class="lede">Daily tracking tells you what happened. This is where you find out whether the <i>system</i> is
+      working — and change exactly one thing if it isn't.</div>
+  </div>
+
+  <div class="note acc" id="whenNote" style="margin-bottom:16px"></div>
+
+  <div class="cols main">
+    <div class="stack">
+
+      <section class="card">
+        <div class="row" style="margin-bottom:14px">
+          <div><div class="kicker" style="margin:0">Automatic</div>
+            <h2 style="margin:4px 0 0" id="wkTitle">This week</h2></div>
+          <div class="row right" style="gap:6px">
+            <button class="btn sm" onclick="shiftWeek(-1)">← Previous</button>
+            <button class="btn sm" onclick="shiftWeek(1)" id="nextBtn">Next →</button>
+          </div>
+        </div>
+        <div class="tiny" id="partialNote" style="margin:-4px 0 13px"></div>
+        <div class="score" id="score"></div>
+        <div class="wkbar" id="wkbar"></div>
+        <div class="tiny" style="margin-top:8px;text-align:center">Daily XP, Monday through Sunday</div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Read the numbers</div>
+        <h2>The verdict</h2>
+        <div class="verdict" id="verdict"></div>
+        <div class="cite" style="margin-top:13px"><b>Harkin, Webb, Chang, Prestwich, Conner, Kellar, Benn &amp;
+          Sheeran (2016), <i>Psychological Bulletin</i> 142(2):198–229.</b> Meta-analysis of 138 studies (19,951
+          participants): prompting people to monitor goal progress had a small-to-medium effect on actually attaining
+          the goal — and the effect was larger when progress was recorded rather than merely noticed. That's the whole
+          justification for this page existing.</div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Manual</div>
+        <h2>Three wins</h2>
+        <p class="sub">Anything that went right, however small. You will systematically under-count these — the
+          negatives are louder — so write them down before you look at what went wrong.</p>
+        <div class="field" style="margin-top:0"><label>① </label><input type="text" id="w1"/></div>
+        <div class="field"><label>②</label><input type="text" id="w2"/></div>
+        <div class="field"><label>③</label><input type="text" id="w3"/></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker warn">Manual</div>
+        <h2>The bottleneck</h2>
+        <p class="sub">Not everything that went wrong. The <i>one</i> thing that, if fixed, would have made the
+          biggest difference to the numbers above.</p>
+        <div class="field" style="margin-top:0"><label>What was the bottleneck?</label>
+          <input type="text" id="obstacle" placeholder="Evenings — I never once studied after 6pm"/></div>
+        <div class="field"><label>Why did it happen? Be specific about the mechanism, not the mood.</label>
+          <textarea id="cause" style="min-height:66px" placeholder="By 6pm I'm on the couch with my phone, and the desk is upstairs"></textarea></div>
+        <div class="field"><label>The one change for next week — a system change, not a promise</label>
+          <textarea id="change" style="min-height:66px" placeholder="Move the evening block to 4:30pm before I sit down, and leave the book on the couch arm"></textarea></div>
+        <div class="note warn" style="margin-top:13px">
+          <b>One change only.</b> If you change five things and next week is better, you've learned nothing about
+          which one mattered. This is the difference between a system that improves and a system you keep rebuilding.
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Forward</div>
+        <h2>Next week's targets</h2>
+        <p class="sub">Process targets, not outcomes — the things fully inside your control.</p>
+        <div class="cols c2">
+          <div class="field" style="margin:0"><label>Study flights</label><input type="number" id="tFlights" placeholder="10"/></div>
+          <div class="field" style="margin:0"><label>Focused minutes</label><input type="number" id="tMinutes" placeholder="500"/></div>
+          <div class="field"><label>Training sessions</label><input type="number" id="tTrain" placeholder="4"/></div>
+          <div class="field"><label>Days with the recall queue cleared</label><input type="number" id="tRecall" placeholder="6"/></div>
+        </div>
+        <div class="field"><label>Anything else that has to happen this week</label>
+          <textarea id="tNotes" style="min-height:60px"></textarea></div>
+        <button class="btn grad big wide" id="commit" style="margin-top:18px">✓ CLOSE THE WEEK — +60 XP</button>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">Against your goals</div>
+        <h2>Pace check</h2>
+        <div id="goals"></div>
+        <a class="btn wide primary" href="flightplan.html" style="margin-top:12px;display:block;text-align:center;text-decoration:none">Update the numbers →</a>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Trend</div>
+        <h2>Last 8 weeks</h2>
+        <div id="trend"></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Discipline</div>
+        <h2>Don't skip this on a bad week</h2>
+        <p class="sub" style="margin-bottom:0">The weeks you least want to open this page are the weeks it's worth
+          the most. A bad week reviewed becomes one adjusted variable. A bad week avoided becomes a bad month —
+          and the avoidance itself is the thing that ends most four-month attempts, not the bad week.</p>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Past reviews</div>
+        <h2>Archive</h2>
+        <div id="archive"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+let offset=0;
+const F=['w1','w2','w3','obstacle','cause','change','tFlights','tMinutes','tTrain','tRecall','tNotes'];
+
+function wkStart(o){ return FD.shift(FD.weekKey(),(o||0)*7); }
+function weekDays(o){ const s=wkStart(o); return Array.from({length:7},(_,i)=>FD.shift(s,i)); }
+function rec(o){ const w=FD.read().weeks||{}; return w[wkStart(o)]||{}; }
+function saveWeek(patch){
+  FD.mutate(s=>{ s.weeks=s.weeks||{}; const k=wkStart(offset);
+    s.weeks[k]=Object.assign({},s.weeks[k]||{},patch); });
+}
+function daysElapsed(o){ return o===0 ? (new Date().getDay()+6)%7+1 : 7; }
+function stats(o,limit){
+  const s=FD.read(); let xp=0,min=0,fl=0,rev=0,hb=0,hbP=0,tr=0,trs=0,sl=[],urg=0,urgW=0,act=0,rate=[];
+  const hs=(s.habits||[]).filter(h=>!h.archived);
+  const span=weekDays(o).slice(0,limit||7);
+  span.forEach(k=>{
+    const d=s.days[k]||{}, m=d.mods||{};
+    xp+=d.xp||0; if(d.xp>0) act++;
+    if(m.study){ min+=m.study.minutes||0; fl+=m.study.sessions||0; }
+    if(m.recall) rev+=m.recall.reviewed||0;
+    if(m.habits){ hb+=Object.keys(m.habits.done||{}).length; }
+    hbP+=hs.length;
+    if(m.body){ tr+=Number(m.body.trainMin)||0;
+      if(m.body.trainType==='Strength'||m.body.trainType==='Mixed') trs++;
+      if(m.body.sleepHours) sl.push(Number(m.body.sleepHours)); }
+    if(m.debrief&&m.debrief.rating) rate.push(m.debrief.rating);
+  });
+  (s.urges||[]).forEach(u=>{ if(span.includes(u.date)){ urg++; if(u.won) urgW++; } });
+  return {xp,min,fl,rev,hb,hbPct:FD.pct(hb,hbP),tr,trs,
+          sleep:sl.length?(sl.reduce((a,b)=>a+b,0)/sl.length):0,
+          urg,urgW,act,mood:rate.length?(rate.reduce((a,b)=>a+b,0)/rate.length):0};
+}
+function delta(now,prev,unit,invert){
+  if(prev===0&&now===0) return '<div class="d fl">—</div>';
+  if(prev===0) return '<div class="d up">new</div>';
+  const p=Math.round((now-prev)/prev*100);
+  const good=invert?p<0:p>0;
+  return '<div class="d '+(p===0?'fl':good?'up':'dn')+'">'+(p>0?'▲ +':p<0?'▼ ':'')+p+'% vs last week</div>';
+}
+function sc(n,l,d){ return '<div class="sc"><div class="n">'+n+'</div><div class="l">'+l+'</div>'+(d||'')+'</div>'; }
+
+function paint(){
+  const el=daysElapsed(offset), partial=el<7;
+  const a=stats(offset,el), b=stats(offset-1,el);
+  const start=wkStart(offset), end=FD.shift(start,6);
+  document.getElementById('wkTitle').textContent=
+    FD.parseKey(start).toLocaleDateString(undefined,{month:'short',day:'numeric'})+' – '+
+    FD.parseKey(end).toLocaleDateString(undefined,{month:'short',day:'numeric'})+
+    (offset===0?' · this week':offset===-1?' · last week':'');
+  document.getElementById('partialNote').textContent = partial
+    ? 'Week in progress — day '+el+' of 7. Comparisons below are against the same first '+el+
+      ' day'+(el===1?'':'s')+' of last week, so they are like-for-like.'
+    : 'Complete week. Comparisons are full week against full week.';
+  document.getElementById('nextBtn').disabled=offset>=0;
+
+  document.getElementById('score').innerHTML=
+    sc(a.xp,'XP earned',delta(a.xp,b.xp))+
+    sc(a.act+'/'+el,'Active days',delta(a.act,b.act))+
+    sc(a.min,'Focused minutes',delta(a.min,b.min))+
+    sc(a.fl,'Study flights',delta(a.fl,b.fl))+
+    sc(a.rev,'Cards recalled',delta(a.rev,b.rev))+
+    sc(a.hbPct+'%','Habit consistency',delta(a.hbPct,b.hbPct))+
+    sc(a.tr,'Training minutes',delta(a.tr,b.tr))+
+    sc(a.trs,'Strength sessions',delta(a.trs,b.trs))+
+    sc(a.sleep?a.sleep.toFixed(1)+'h':'—','Avg sleep',delta(Math.round(a.sleep*10),Math.round(b.sleep*10)))+
+    sc(a.urg?a.urgW+'/'+a.urg:'—','Urges beaten','')+
+    sc(a.mood?a.mood.toFixed(1):'—','Avg day rating',delta(Math.round(a.mood*10),Math.round(b.mood*10)))+
+    sc(FD.streak(),'Current streak','');
+
+  const s=FD.read(), vals=weekDays(offset).map(k=>(s.days[k]||{}).xp||0);
+  const max=Math.max(60,...vals);
+  document.getElementById('wkbar').innerHTML=vals.map((v,i)=>
+    '<div><div class="b"><i style="height:'+FD.pct(v,max)+'%"></i></div>'+
+    '<div class="d">'+['M','T','W','T','F','S','S'][i]+'</div><div class="v">'+v+'</div></div>').join('');
+
+  const f=el/7;   // scale full-week thresholds to how much of the week has run
+  const score=(a.act>=6*f?2:a.act>=4*f?1:0)+(a.min>=300*f?2:a.min>=150*f?1:0)+
+              (a.hbPct>=75?2:a.hbPct>=50?1:0)+(a.tr>=150*f?1:0);
+  const noun=partial?'So far this week':'This week';
+  const v=document.getElementById('verdict');
+  if(score>=6){ v.className='verdict good';
+    v.innerHTML='<b>'+noun+' is strong.</b> '+a.act+' active days, '+a.min+' focused minutes and '+a.hbPct+
+    '% habit consistency. Don’t redesign anything — the system is working. Write down what made it work so you can reproduce it.'; }
+  else if(score>=3){ v.className='verdict mid';
+    v.innerHTML='<b>'+noun+': working, not great.</b> '+a.act+' of '+el+' days active, '+a.min+' focused minutes. '+
+    'This is the pace that actually compounds over four months, so it’s fine — but find the one bottleneck below and move it.'; }
+  else { v.className='verdict bad';
+    v.innerHTML='<b>'+noun+' has not happened.</b> '+a.act+' active days and '+a.min+' focused minutes. '+
+    'That is information, not a verdict. Something in the setup is wrong — the target is too big, the time is wrong, '+
+    'or the environment is beating you. Change one of those three below, not your level of resolve.'; }
+
+  const pr=FD.program();
+  document.getElementById('goals').innerHTML=(s.goals||[]).length ? (s.goals||[]).map(g=>{
+    const span=Number(g.target)-Number(g.start||0), made=Number(g.current||0)-Number(g.start||0);
+    const exp=span*(pr.dayNo/pr.total), ratio=exp>0?made/exp:0;
+    return '<div style="margin-bottom:14px"><div class="row" style="gap:6px;margin-bottom:6px">'+
+      '<b style="font-size:13px">'+FD.esc(g.title)+'</b>'+
+      '<span class="right pill '+(ratio>=.95?'on':ratio>=.75?'due':'off')+'">'+Math.round(ratio*100)+'% of pace</span></div>'+
+      '<div class="bar thin"><i style="width:'+FD.pct(made,span)+'%"></i></div>'+
+      '<div class="tiny" style="margin-top:4px">'+FD.esc(g.current||0)+' / '+FD.esc(g.target)+' '+FD.esc(g.unit||'')+
+      ' · should be near '+Math.round(Number(g.start||0)+exp)+' by now</div></div>';
+  }).join('') : '<div class="empty">No goals set yet.</div>';
+
+  let out='';
+  for(let i=-7;i<=0;i++){
+    const st=stats(i,daysElapsed(i)), w=wkStart(i);
+    out+='<div class="row" style="padding:7px 0;border-bottom:1px solid var(--line);font-size:12.5px">'+
+      '<span class="mono" style="color:var(--faint);width:56px">'+FD.parseKey(w).toLocaleDateString(undefined,{month:'short',day:'numeric'})+'</span>'+
+      '<span class="bar thin" style="flex:1"><i style="width:'+FD.pct(st.xp,Math.max(600,st.xp))+'%"></i></span>'+
+      '<span class="mono right" style="width:64px;text-align:right">'+st.xp+' XP</span></div>';
+  }
+  document.getElementById('trend').innerHTML=out;
+
+  const ws=FD.read().weeks||{};
+  const keys=Object.keys(ws).filter(k=>ws[k].committed).sort().reverse().slice(0,8);
+  document.getElementById('archive').innerHTML = keys.length ? keys.map(k=>
+    '<div style="padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px">'+
+    '<b class="mono">'+FD.parseKey(k).toLocaleDateString(undefined,{month:'short',day:'numeric'})+'</b>'+
+    (ws[k].change?'<div class="muted" style="margin-top:3px">Changed: '+FD.esc(ws[k].change)+'</div>':'')+
+    '</div>').join('') : '<div class="empty">No reviews closed yet.</div>';
+
+  // load fields for the viewed week
+  const r=rec(offset);
+  F.forEach(f=>{ document.getElementById(f).value=r[f]||''; });
+  document.getElementById('commit').textContent=r.committed?'✓ WEEK CLOSED — update':'✓ CLOSE THE WEEK — +60 XP';
+
+  const dow=new Date().getDay();
+  document.getElementById('whenNote').innerHTML = dow===0
+    ? '<b>It’s Sunday — this is the day.</b> Twelve minutes now sets the whole of next week.'
+    : '<b>This is a Sunday ritual</b>, but reviewing early is better than not reviewing. '+
+      ((7-dow)%7)+' day'+(((7-dow)%7)===1?'':'s')+' until the proper slot.';
+}
+function shiftWeek(n){ offset=Math.min(0,offset+n); paint(); }
+F.forEach(f=>{
+  const el=document.getElementById(f);
+  let t; el.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(()=>{
+    const p={}; p[f]=el.value; saveWeek(p); },320); });
+});
+document.getElementById('commit').onclick=()=>{
+  const r=rec(offset);
+  if(!document.getElementById('change').value.trim()){
+    FD.toast('⚠️ Name the one change for next week'); document.getElementById('change').focus(); return;
+  }
+  const already=r.committed;
+  saveWeek({committed:true});
+  if(!already){ FD.addXP(60,'Week closed'); FD.confetti(44); FD.chime(); }
+  else FD.toast('Review updated');
+  paint();
+};
+paint();
+</script>
+</body>
+</html>

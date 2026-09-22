@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Firewall — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .panic{
+    width:100%;padding:30px 22px;border-radius:20px;border:1px solid color-mix(in srgb,var(--warn) 50%,var(--line));
+    background:linear-gradient(135deg,color-mix(in srgb,var(--warn) 16%,transparent),color-mix(in srgb,var(--danger) 10%,transparent)),var(--panel);
+    color:var(--text);font-size:clamp(18px,3.2vw,24px);font-weight:900;letter-spacing:-.025em;cursor:pointer;
+    font-family:inherit;transition:.15s;line-height:1.3
+  }
+  .panic:hover{transform:translateY(-2px);box-shadow:0 14px 40px color-mix(in srgb,var(--warn) 22%,transparent)}
+  .panic small{display:block;font-size:13px;font-weight:700;color:var(--muted);margin-top:8px;letter-spacing:0}
+  .surf{display:none}
+  .surf.on{display:block;animation:fdpop .25s}
+  .surfclock{font-family:var(--mono);font-size:clamp(50px,11vw,78px);font-weight:800;text-align:center;
+    letter-spacing:-.05em;font-variant-numeric:tabular-nums;margin:4px 0}
+  .script{
+    padding:20px;border-radius:var(--r);border:1px solid color-mix(in srgb,var(--accent) 38%,var(--line));
+    background:color-mix(in srgb,var(--accent) 7%,var(--panel2));font-size:16px;line-height:1.6;
+    min-height:110px;display:grid;place-items:center;text-align:center;font-weight:750
+  }
+  .rule{display:grid;grid-template-columns:1fr auto;gap:11px;align-items:center;padding:13px;
+    border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel2)}
+  .rule+.rule{margin-top:8px}
+  .rule .if{color:var(--warn);font-weight:900;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+  .rule .th{color:var(--good);font-weight:900;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+  .rule p{margin:2px 0 0;font-size:13.5px;line-height:1.45}
+  .urow{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:12.5px;align-items:baseline}
+  .urow:last-child{border:0}
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);
+    color:var(--text);font-weight:850;font-size:12px;cursor:pointer;font-family:inherit}
+  .seg button.on{background:var(--accent);color:#fff;border-color:transparent}
+</style>
+</head>
+<body data-root=".." data-module="firewall">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker warn">🛡️ On demand · open this the moment you feel the pull</div>
+    <h1>Firewall</h1>
+    <div class="lede">An urge is a wave, not a command. It rises, peaks, and falls on its own within minutes if you
+      don't feed it. Your only job is to not act for ten minutes.</div>
+  </div>
+
+  <div class="cols c4">
+    <div class="stat"><div class="n" id="kWon">0</div><div class="l">Urges beaten</div><div class="sm" id="kRate">—</div></div>
+    <div class="stat"><div class="n" id="kToday">0</div><div class="l">Logged today</div><div class="sm" id="kTodayW">—</div></div>
+    <div class="stat"><div class="n" id="kClean">0</div><div class="l">Clean streak</div><div class="sm">Days without giving in</div></div>
+    <div class="stat"><div class="n" id="kRules">0</div><div class="l">If-then rules armed</div><div class="sm">Pre-decided responses</div></div>
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card warnc">
+        <button class="panic" id="panicBtn" onclick="beginSurf()">
+          🌊 I'M BEING PULLED AWAY
+          <small>Press this instead of opening the thing. Ten minutes. That's the whole ask.</small>
+        </button>
+
+        <div class="surf" id="surf" style="margin-top:18px">
+          <div class="surfclock" id="surfClock">10:00</div>
+          <div class="script" id="script">Sit still. Don't fight it — just watch it.</div>
+          <div class="field"><label>What set it off?</label>
+            <input type="text" id="trigger" placeholder="Hit a hard paragraph and felt stupid"/></div>
+          <div class="field"><label>How strong, 1–10?</label>
+            <input type="range" id="intensity" min="1" max="10" value="6"/>
+            <div class="row"><span class="tiny">Mild</span><span class="right mono" id="intV">6</span></div></div>
+          <div class="btnrow grid2" style="margin-top:14px">
+            <button class="btn good" onclick="resolve(true)">✓ It passed — back to work</button>
+            <button class="btn danger" onclick="resolve(false)">I gave in</button>
+          </div>
+          <div class="tiny" style="margin-top:11px;text-align:center">
+            Log it honestly either way. The data is only useful if it's true, and giving in isn't a moral failure —
+            it's information about which trigger needs a better if-then rule.
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Pre-decided responses</div>
+        <h2>If-then rules</h2>
+        <p class="sub">Decide now, while you're calm, what you'll do when the specific thing happens. In the moment,
+          you will not be capable of good decisions — that's the whole reason this section exists.</p>
+        <div id="rules"></div>
+        <div class="cols c2" style="margin-top:13px">
+          <div class="field" style="margin:0"><label>If — the exact trigger</label>
+            <input type="text" id="rIf" placeholder="I pick up my phone during a study block"/></div>
+          <div class="field" style="margin:0"><label>Then — the exact response</label>
+            <input type="text" id="rThen" placeholder="I put it in the next room and reread the last paragraph"/></div>
+        </div>
+        <button class="btn primary wide" style="margin-top:12px" onclick="addRule()">+ Arm this rule</button>
+        <div class="cite" style="margin-top:13px"><b>Gollwitzer &amp; Sheeran (2006), <i>Advances in Experimental
+          Social Psychology</i> 38:69–119.</b> Across 94 independent tests, if-then plans produced a medium-to-large
+          improvement in goal attainment (d = 0.65) over intention alone — because the response gets triggered by the
+          situation rather than requiring a decision.</div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Environment</div>
+        <h2>Commitment devices</h2>
+        <p class="sub">Willpower in the moment is the weakest tool available. Change what's possible instead of what's tempting.</p>
+        <div class="checklist" id="devices">
+          <label class="check"><input type="checkbox"><span class="ctext"><b>Phone charges outside the room</b> overnight and during study blocks</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext"><b>Site blocker installed</b> and scheduled for my study hours</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext"><b>Social apps deleted from the phone</b> — browser only, logged out</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext"><b>Notifications off</b> for everything except calls from two people</span></label>
+          <label class="check"><input type="checkbox"><span class="ctext"><b>A study location my distractions don't live in</b></span></label>
+          <label class="check"><input type="checkbox"><span class="ctext"><b>Someone knows my weekly target</b> and will ask about it</span></label>
+        </div>
+        <div class="cite" style="margin-top:13px"><b>Ariely &amp; Wertenbroch (2002), <i>Psychological Science</i>
+          13(3):219–224.</b> Students given the option to set their own binding deadlines chose to impose them — and
+          performed better than students with no self-imposed constraints. People know they'll procrastinate and will
+          pay to be stopped.</div>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">Why waiting works</div>
+        <h2>Urge surfing</h2>
+        <p class="sub" style="margin-bottom:0">Smokers taught to observe cravings without acting — noticing the
+          physical sensation, watching it crest and fall — smoked significantly less over the following week than
+          those given standard coping advice. The instruction was not to resist. It was to watch.</p>
+        <div class="cite" style="margin-top:11px"><b>Bowen &amp; Marlatt (2009), <i>Psychology of Addictive
+          Behaviors</i> 23(4):666–671.</b></div>
+        <div class="note acc" style="margin-top:13px">
+          <b>The distinction matters.</b> Suppression — "don't think about it" — tends to backfire. Observation
+          doesn't, because you're not fighting anything. You're waiting.
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Make the trap work for you</div>
+        <h2>Temptation bundling</h2>
+        <p class="sub">Only let yourself have the addictive thing <i>while</i> doing the thing you avoid. Gym-goers
+          who could only listen to their favourite audiobooks at the gym raised attendance by 27–51%.</p>
+        <div class="field" style="margin-top:0"><label>I only get…</label>
+          <input type="text" id="tempt" placeholder="my show / the good coffee / that podcast"/></div>
+        <div class="field"><label>…while I…</label>
+          <input type="text" id="bundle" placeholder="am on the treadmill / doing flashcards"/></div>
+        <div class="cite" style="margin-top:11px"><b>Milkman, Minson &amp; Volpp (2014), <i>Management Science</i>
+          60(2):283–299.</b></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">History</div>
+        <h2>Urge log</h2>
+        <div id="log"></div>
+        <div class="tiny" style="margin-top:11px" id="topTrigger"></div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const M='firewall';
+const SCRIPTS=[
+  'Sit still. Don’t fight it — just watch it.',
+  'Where do you feel it? Chest, jaw, hands, stomach?',
+  'Name it out loud: “this is an urge.” That’s all it is.',
+  'It will peak. Peaks don’t last. Keep watching.',
+  'Breathe out longer than you breathe in.',
+  'You are not deciding never. You are deciding not now.',
+  'The wave is already smaller than it was two minutes ago.',
+  'What were you doing right before this? That’s where you go back.',
+  'Almost through. Don’t reward the last thirty seconds.',
+  'Open the thing you were working on. One paragraph.'
+];
+let surfLeft=600, surfIv=null, scrIv=null;
+
+FD.bindChecks(document.getElementById('devices'),M,null,4);
+['tempt','bundle'].forEach(f=>{
+  const el=document.getElementById(f);
+  el.value=(FD.read().settings||{})[f]||'';
+  let t; el.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(()=>
+    FD.mutate(s=>{ s.settings=s.settings||{}; s.settings[f]=el.value; }),300); });
+});
+document.getElementById('intensity').addEventListener('input',e=>
+  document.getElementById('intV').textContent=e.target.value);
+
+function beginSurf(){
+  document.getElementById('surf').classList.add('on');
+  document.getElementById('panicBtn').style.display='none';
+  surfLeft=600; drawSurf(); let i=0;
+  document.getElementById('script').textContent=SCRIPTS[0];
+  clearInterval(surfIv); clearInterval(scrIv);
+  surfIv=setInterval(()=>{ surfLeft--; drawSurf(); if(surfLeft<=0){ clearInterval(surfIv); FD.chime();
+    document.getElementById('script').textContent='Ten minutes. It’s gone, or it’s much smaller. Go back to work.'; } },1000);
+  scrIv=setInterval(()=>{ i=(i+1)%SCRIPTS.length;
+    document.getElementById('script').style.opacity=0;
+    setTimeout(()=>{ document.getElementById('script').textContent=SCRIPTS[i];
+                     document.getElementById('script').style.opacity=1; },200); },50000);
+  document.getElementById('script').style.transition='opacity .2s';
+  FD.beep(440,.2);
+}
+function drawSurf(){
+  document.getElementById('surfClock').textContent=
+    Math.floor(surfLeft/60)+':'+String(surfLeft%60).padStart(2,'0');
+}
+function resolve(won){
+  clearInterval(surfIv); clearInterval(scrIv);
+  const waited=600-surfLeft;
+  FD.mutate(s=>s.urges.push({
+    id:FD.uid(), date:FD.key(), time:new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}),
+    trigger:document.getElementById('trigger').value.trim()||'(unspecified)',
+    intensity:+document.getElementById('intensity').value, won:won, waited:waited
+  }));
+  document.getElementById('surf').classList.remove('on');
+  document.getElementById('panicBtn').style.display='block';
+  document.getElementById('trigger').value='';
+  if(won){ FD.addXP(20,'Urge ridden out'); FD.confetti(28); }
+  else { FD.addXP(6,'Logged honestly'); FD.toast('Logged. That data is worth more than the streak.'); }
+  paint();
+}
+function addRule(){
+  const i=document.getElementById('rIf').value.trim(), t=document.getElementById('rThen').value.trim();
+  if(!i||!t){ FD.toast('⚠️ Need both halves'); return; }
+  FD.mutate(s=>s.rules.push({id:FD.uid(),ifPart:i,thenPart:t}));
+  document.getElementById('rIf').value=''; document.getElementById('rThen').value='';
+  FD.addXP(8,'If-then rule armed'); paint();
+}
+function delRule(id){ FD.mutate(s=>{ s.rules=s.rules.filter(r=>r.id!==id); }); paint(); }
+
+function cleanStreak(){
+  const us=FD.read().urges||[];
+  let n=0,k=FD.key();
+  const bad=kk=>us.some(u=>u.date===kk&&!u.won);
+  const any=kk=>us.some(u=>u.date===kk);
+  if(bad(k)) return 0;
+  k=FD.shift(k,-1);
+  while(!bad(k)&&FD.diff(FD.read().created,k)>=0){ n++; k=FD.shift(k,-1); if(n>400) break; }
+  return n+(any(FD.key())?1:0);
+}
+function paint(){
+  const us=FD.read().urges||[], rs=FD.read().rules||[];
+  const won=us.filter(u=>u.won).length;
+  document.getElementById('kWon').textContent=won;
+  document.getElementById('kRate').textContent=us.length?Math.round(won/us.length*100)+'% of '+us.length+' logged':'—';
+  const today=us.filter(u=>u.date===FD.key());
+  document.getElementById('kToday').textContent=today.length;
+  document.getElementById('kTodayW').textContent=today.length?today.filter(u=>u.won).length+' beaten':'Nothing yet';
+  document.getElementById('kClean').textContent=cleanStreak();
+  document.getElementById('kRules').textContent=rs.length;
+
+  document.getElementById('rules').innerHTML = rs.length ? rs.map(r=>
+    '<div class="rule"><div><span class="if">If</span><p>'+FD.esc(r.ifPart)+'</p>'+
+    '<span class="th" style="margin-top:7px;display:inline-block">Then</span><p>'+FD.esc(r.thenPart)+'</p></div>'+
+    '<button class="del" onclick="delRule(\''+r.id+'\')">✕</button></div>').join('')
+    : '<div class="empty">No rules armed yet. Write one for the distraction that got you yesterday.</div>';
+
+  const recent=us.slice(-14).reverse();
+  document.getElementById('log').innerHTML = recent.length ? recent.map(u=>
+    '<div class="urow"><span class="mono" style="color:var(--faint);width:78px;flex:none">'+u.date.slice(5)+' '+FD.esc(u.time)+'</span>'+
+    '<span style="flex:1">'+FD.esc(u.trigger)+' <span class="muted">· intensity '+u.intensity+'</span></span>'+
+    '<span class="pill '+(u.won?'on':'due')+'">'+(u.won?'beat':'gave in')+'</span></div>').join('')
+    : '<div class="empty">Nothing logged. That’s fine — log them as they happen.</div>';
+
+  const counts={};
+  us.forEach(u=>{ const t=u.trigger.toLowerCase(); if(t!=='(unspecified)') counts[t]=(counts[t]||0)+1; });
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1])[0];
+  document.getElementById('topTrigger').textContent = top&&top[1]>1
+    ? 'Most common trigger: “'+top[0]+'” ('+top[1]+'×). Write an if-then rule for exactly that one.' : '';
+}
+paint();
+</script>
+</body>
+</html>

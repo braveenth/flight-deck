@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Cabin Pressure — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .stage{
+    display:grid;place-items:center;min-height:360px;border:1px solid var(--line);border-radius:var(--r);
+    background:radial-gradient(circle at 50% 50%,color-mix(in srgb,var(--accent) 9%,transparent),transparent 62%),var(--panel2);
+    position:relative;overflow:hidden
+  }
+  .orb{
+    width:210px;height:210px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--accent) 85%,white),var(--accent) 45%,var(--accent2));
+    box-shadow:0 0 70px color-mix(in srgb,var(--accent) 45%,transparent);
+    transform:scale(.4);transition:transform linear;will-change:transform
+  }
+  .phase{
+    position:absolute;bottom:26px;left:0;right:0;text-align:center;font-weight:900;
+    font-size:17px;letter-spacing:-.01em
+  }
+  .phase small{display:block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:5px;font-weight:800}
+  .cnt{position:absolute;top:22px;left:0;right:0;text-align:center;font-family:var(--mono);
+       font-size:14px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .protos{display:grid;gap:9px}
+  .proto{
+    text-align:left;padding:14px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--panel2);
+    cursor:pointer;transition:.15s;font-family:inherit;color:var(--text);width:100%
+  }
+  .proto:hover{border-color:var(--line2);transform:translateY(-1px)}
+  .proto.on{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--panel2))}
+  .proto b{font-size:14px;letter-spacing:-.01em}
+  .proto .d{color:var(--muted);font-size:12.5px;margin-top:4px;line-height:1.45}
+  .proto .p{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:6px;letter-spacing:.04em}
+</style>
+</head>
+<body data-root=".." data-module="mind">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker">🌬️ Daily · five minutes, measurable effect</div>
+    <h1>Cabin Pressure</h1>
+    <div class="lede">Deliberate breathing is the fastest voluntary lever you have on your own arousal. Five minutes a
+      day of the right pattern beat an equal dose of mindfulness meditation on mood in a randomised trial.</div>
+  </div>
+
+  <div class="cols c4">
+    <div class="stat"><div class="n" id="kSess">0</div><div class="l">Sessions today</div><div class="sm" id="kMin">0 min</div></div>
+    <div class="stat"><div class="n" id="kStreak">0</div><div class="l">Day streak here</div><div class="sm">Consecutive days</div></div>
+    <div class="stat"><div class="n" id="kTotal">0</div><div class="l">All-time minutes</div><div class="sm" id="kAll">—</div></div>
+    <div class="stat"><div class="n" id="kMood">—</div><div class="l">Mood shift</div><div class="sm">Before → after</div></div>
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card">
+        <div class="row" style="margin-bottom:14px">
+          <div><div class="kicker" style="margin:0">Live</div>
+            <h2 id="protoName" style="margin:4px 0 0">Cyclic sighing</h2></div>
+          <span class="pill acc right" id="cycles">0 cycles</span>
+        </div>
+        <div class="stage">
+          <div class="cnt" id="cnt">5:00</div>
+          <div class="orb" id="orb"></div>
+          <div class="phase" id="phase">Ready<small>Press start, then follow the orb</small></div>
+        </div>
+        <div class="btnrow grid2" style="margin-top:14px">
+          <button class="btn grad big" id="startBtn" onclick="toggle()">▶ START</button>
+          <button class="btn big" onclick="stop(true)">■ STOP</button>
+        </div>
+        <div class="btnrow" style="margin-top:9px">
+          <button class="btn sm" onclick="setLen(2)">2 min</button>
+          <button class="btn sm" onclick="setLen(5)">5 min</button>
+          <button class="btn sm" onclick="setLen(10)">10 min</button>
+          <button class="btn sm" onclick="setLen(20)">20 min</button>
+          <button class="btn sm right" id="soundBtn" onclick="toggleSound()">🔔 Cues on</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Protocols</div>
+        <h2>Pick one and stay with it</h2>
+        <p class="sub">Switching every day is a way of avoiding the practice. Run one for a fortnight, then judge it.</p>
+        <div class="protos" id="protos"></div>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">The trial</div>
+        <h2>Why cyclic sighing is the default</h2>
+        <p class="sub" style="margin-bottom:0">108 adults were randomised to five minutes daily of one of three
+          breathwork protocols or mindfulness meditation, for a month. All four improved mood and lowered anxiety —
+          but <b>cyclic sighing</b> (a double inhale through the nose, then a long slow exhale through the mouth)
+          produced the largest improvement in daily positive affect and the biggest reduction in respiratory rate.</p>
+        <div class="cite" style="margin-top:11px"><b>Balban, Neri, Kogon, Weed, Nouriani, Jo, Holl, Zeitzer, Spiegel
+          &amp; Huberman (2023), <i>Cell Reports Medicine</i> 4(1):100895.</b></div>
+        <div class="note acc" style="margin-top:13px">
+          The mechanism is the extended exhale. Exhalation lengthens the interval between heartbeats via vagal
+          influence, which is why the exhale here is always longer than the inhale.
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Optional</div>
+        <h2>Mood check</h2>
+        <p class="sub">Two taps. It's the only way you'll know whether this is doing anything for you specifically.</p>
+        <div class="field" style="margin-top:0"><label>Before — 1 flat, 10 excellent</label>
+          <input type="range" id="pre" min="1" max="10" value="5"/>
+          <div class="row"><span class="tiny">1</span><span class="right mono" id="preV">5</span></div></div>
+        <div class="field"><label>After</label>
+          <input type="range" id="post" min="1" max="10" value="5"/>
+          <div class="row"><span class="tiny">1</span><span class="right mono" id="postV">5</span></div></div>
+        <button class="btn wide" style="margin-top:12px" onclick="logMood()">Save mood</button>
+      </section>
+
+      <section class="card">
+        <div class="kicker">When to use it</div>
+        <h2>Three moments</h2>
+        <div class="note"><b>Before a study flight.</b> Lower arousal makes the first four minutes cheaper.</div>
+        <div class="note" style="margin-top:9px"><b>When the urge to bail hits.</b> Two minutes here instead of the
+          Firewall's ten-minute delay, if what you're feeling is anxiety rather than temptation.</div>
+        <div class="note" style="margin-top:9px"><b>In bed.</b> 4-7-8 with a long exhale, lights off, no clock-watching.</div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const M='mind';
+const PROTOS=[
+  {id:'sigh', name:'Cyclic sighing', pattern:'≈1.5s in · 1s top-up · 5.5s out',
+   desc:'Double inhale through the nose, then a long slow exhale through the mouth. The strongest performer in the Stanford trial.',
+   phases:[{l:'Inhale through the nose',s:.82,d:1.5},{l:'Second short inhale — top it up',s:1,d:1.0},{l:'Long slow exhale through the mouth',s:.35,d:5.5}]},
+  {id:'box', name:'Box breathing', pattern:'4 · 4 · 4 · 4',
+   desc:'Equal in, hold, out, hold. Steadying rather than sedating — good before something demanding.',
+   phases:[{l:'Inhale',s:1,d:4},{l:'Hold',s:1,d:4},{l:'Exhale',s:.35,d:4},{l:'Hold empty',s:.35,d:4}]},
+  {id:'478', name:'4-7-8', pattern:'4 in · 7 hold · 8 out',
+   desc:'Heavily exhale-weighted. Use it in bed or after something stressful, not before work.',
+   phases:[{l:'Inhale through the nose',s:1,d:4},{l:'Hold',s:1,d:7},{l:'Exhale through the mouth',s:.35,d:8}]},
+  {id:'coh', name:'Coherent breathing', pattern:'5.5 in · 5.5 out',
+   desc:'≈5.5 breaths a minute, the rate where heart-rate variability tends to peak. The easiest one to sustain for 20 minutes.',
+   phases:[{l:'Inhale',s:1,d:5.5},{l:'Exhale',s:.35,d:5.5}]},
+  {id:'quiet', name:'Silent sit', pattern:'no pacing',
+   desc:'No pattern. Breathe normally, notice when the mind leaves, bring it back. The orb holds still.',
+   phases:[{l:'Sit. Return when you drift.',s:.7,d:10}]}
+];
+let proto=PROTOS[0], len=5, left=len*60, running=false, tick=null, phaseT=null, pi=0, cycles=0, sound=true, elapsed=0;
+
+function paintProtos(){
+  document.getElementById('protos').innerHTML=PROTOS.map(p=>
+    '<button class="proto'+(p.id===proto.id?' on':'')+'" data-id="'+p.id+'">'+
+    '<b>'+p.name+'</b><div class="d">'+p.desc+'</div><div class="p">'+p.pattern+'</div></button>').join('');
+  FD.$$('.proto').forEach(b=>b.onclick=()=>{
+    proto=PROTOS.find(p=>p.id===b.dataset.id);
+    document.getElementById('protoName').textContent=proto.name;
+    FD.setMod(M,{protocol:proto.id});
+    stop(false); paintProtos();
+  });
+}
+function setLen(n){ len=n; if(!running){ left=n*60; drawClock(); } FD.toast(n+'-minute session'); }
+function drawClock(){
+  document.getElementById('cnt').textContent=
+    Math.floor(left/60)+':'+String(left%60).padStart(2,'0');
+  document.getElementById('cycles').textContent=cycles+' cycle'+(cycles===1?'':'s');
+}
+function runPhase(){
+  if(!running) return;
+  const ph=proto.phases[pi];
+  const orb=document.getElementById('orb');
+  orb.style.transitionDuration=ph.d+'s';
+  orb.style.transform='scale('+ph.s+')';
+  document.getElementById('phase').innerHTML=ph.l+'<small>'+proto.name+' · '+ph.d+'s</small>';
+  if(sound) FD.beep(pi===0?520:pi===proto.phases.length-1?360:440,.10,'sine');
+  phaseT=setTimeout(()=>{
+    pi=(pi+1)%proto.phases.length;
+    if(pi===0){ cycles++; drawClock(); }
+    runPhase();
+  },ph.d*1000);
+}
+function toggle(){ running?stop(true):start(); }
+function start(){
+  running=true; pi=0;
+  document.getElementById('startBtn').textContent='❚❚ PAUSE';
+  runPhase();
+  tick=setInterval(()=>{
+    left--; elapsed++; drawClock();
+    if(left<=0) finish();
+  },1000);
+}
+function stop(reset){
+  running=false; clearInterval(tick); clearTimeout(phaseT);
+  document.getElementById('startBtn').textContent='▶ START';
+  document.getElementById('orb').style.transitionDuration='.6s';
+  document.getElementById('orb').style.transform='scale(.4)';
+  document.getElementById('phase').innerHTML='Ready<small>Press start, then follow the orb</small>';
+  if(reset&&elapsed>=60) bank();
+  if(reset){ left=len*60; cycles=0; elapsed=0; drawClock(); }
+}
+function bank(){
+  const mins=Math.round(elapsed/60);
+  const d=FD.mod(M);
+  FD.setMod(M,{sessions:(d.sessions||0)+1, minutes:(d.minutes||0)+mins, protocol:proto.id});
+  FD.mutate(s=>{ s.records.breathMinutes=(s.records.breathMinutes||0)+mins; });
+  FD.addXP(Math.min(30,10+mins*2),mins+' min of '+proto.name);
+  paint();
+}
+function finish(){
+  clearInterval(tick); clearTimeout(phaseT); running=false;
+  document.getElementById('startBtn').textContent='▶ START';
+  FD.chime(); FD.confetti(26); bank();
+  document.getElementById('phase').innerHTML='Complete<small>Notice how the next five minutes feel</small>';
+  left=len*60; cycles=0; elapsed=0; drawClock();
+}
+function toggleSound(){
+  sound=!sound;
+  document.getElementById('soundBtn').textContent=sound?'🔔 Cues on':'🔕 Cues off';
+}
+['pre','post'].forEach(id=>{
+  const el=document.getElementById(id);
+  el.addEventListener('input',()=>document.getElementById(id+'V').textContent=el.value);
+});
+function logMood(){
+  const pre=+document.getElementById('pre').value, post=+document.getElementById('post').value;
+  FD.setMod(M,{moodPre:pre,moodPost:post});
+  FD.addXP(5,'Mood logged'); paint();
+}
+function modStreak(){
+  let n=0,k=FD.key();
+  const has=kk=>(((FD.read().days[kk]||{}).mods||{}).mind||{}).sessions>0;
+  if(!has(k)) k=FD.shift(k,-1);
+  while(has(k)){ n++; k=FD.shift(k,-1); }
+  return n;
+}
+function paint(){
+  const d=FD.mod(M), s=FD.read();
+  document.getElementById('kSess').textContent=d.sessions||0;
+  document.getElementById('kMin').textContent=(d.minutes||0)+' min today';
+  document.getElementById('kStreak').textContent=modStreak();
+  document.getElementById('kTotal').textContent=s.records.breathMinutes||0;
+  document.getElementById('kAll').textContent=Math.round((s.records.breathMinutes||0)/60*10)/10+' hours';
+  document.getElementById('kMood').textContent=(d.moodPre&&d.moodPost)
+    ? (d.moodPost>d.moodPre?'+':'')+(d.moodPost-d.moodPre) : '—';
+  if(d.moodPre) document.getElementById('pre').value=d.moodPre;
+  if(d.moodPost) document.getElementById('post').value=d.moodPost;
+  document.getElementById('preV').textContent=document.getElementById('pre').value;
+  document.getElementById('postV').textContent=document.getElementById('post').value;
+}
+const saved=FD.mod(M).protocol;
+if(saved){ proto=PROTOS.find(p=>p.id===saved)||proto; document.getElementById('protoName').textContent=proto.name; }
+paintProtos(); drawClock(); paint();
+</script>
+</body>
+</html>

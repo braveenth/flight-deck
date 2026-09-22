@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Airframe — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .toggles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-top:8px}
+  .tog{
+    display:flex;gap:9px;align-items:center;padding:12px;border:1px solid var(--line);border-radius:var(--r-sm);
+    background:var(--panel2);cursor:pointer;font-size:13px;font-weight:750;transition:.15s;line-height:1.3
+  }
+  .tog:hover{border-color:var(--line2)}
+  .tog.on{background:color-mix(in srgb,var(--good) 9%,var(--panel2));border-color:color-mix(in srgb,var(--good) 34%,var(--line))}
+  .chart{width:100%;height:120px;display:block}
+  .chart rect{transition:.3s}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{
+    flex:1;min-width:78px;padding:11px 8px;border-radius:var(--r-sm);border:1px solid var(--line);
+    background:var(--panel2);color:var(--text);font-weight:850;font-size:12.5px;cursor:pointer;font-family:inherit;transition:.15s
+  }
+  .seg button.on{background:var(--accent);color:#fff;border-color:transparent}
+  .tgt{display:flex;align-items:center;gap:11px;padding:11px 0;border-bottom:1px solid var(--line)}
+  .tgt:last-child{border:0}
+  .tgt .nm{font-size:13px;font-weight:800;flex:none;width:130px}
+  .tgt .bar{flex:1}
+  .tgt .v{font-size:12px;color:var(--muted);font-family:var(--mono);white-space:nowrap;width:78px;text-align:right}
+</style>
+</head>
+<body data-root=".." data-module="body">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker">🫀 Daily · the hardware everything else runs on</div>
+    <h1>Airframe</h1>
+    <div class="lede">You cannot out-study a broken body. Sleep is when today's learning gets written to long-term
+      storage, and aerobic exercise is one of the few things shown to physically grow the structure that does it.</div>
+  </div>
+
+  <div class="cols c4">
+    <div class="stat"><div class="n" id="kSleep">—</div><div class="l">Sleep last night</div><div class="sm" id="kSleepAvg">7-day avg —</div></div>
+    <div class="stat"><div class="n" id="kTrain">0</div><div class="l">Training min this week</div><div class="bar thin good" style="margin-top:9px"><i id="kTrainBar"></i></div><div class="sm">Target 150</div></div>
+    <div class="stat"><div class="n" id="kStr">0</div><div class="l">Strength sessions</div><div class="sm">Target 2 / week</div></div>
+    <div class="stat"><div class="n" id="kReg">—</div><div class="l">Sleep regularity</div><div class="sm" id="kRegS">Bedtime consistency</div></div>
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card">
+        <div class="kicker">Log · today</div>
+        <h2>Sleep</h2>
+        <p class="sub">Log this in the morning. Consistency of timing matters at least as much as duration.</p>
+        <div class="cols c3">
+          <div class="field" style="margin:0"><label>Hours slept</label><input type="number" id="sleepHours" step="0.25" min="0" max="14" placeholder="7.5"/></div>
+          <div class="field" style="margin:0"><label>Bedtime</label><input type="time" id="bedtime"/></div>
+          <div class="field" style="margin:0"><label>Wake time</label><input type="time" id="waketime"/></div>
+        </div>
+        <div class="field"><label>Sleep quality</label>
+          <div class="seg" id="segQual"></div></div>
+        <div class="note acc" style="margin-top:14px">
+          <b>Sleep is not downtime for memory — it's the processing step.</b> Consolidation during sleep is what turns
+          today's fragile encoding into something you'll still have next month. Cutting it is the most expensive
+          "extra study hour" available.
+          <div class="cite"><b>Rasch &amp; Born (2013), <i>Physiological Reviews</i> 93(2):681–766</b> — "About sleep's
+          role in memory."</div>
+        </div>
+        <div class="note" style="margin-top:11px">
+          Across ~60,000 people wearing accelerometers, <b>how regular</b> sleep timing was predicted mortality risk
+          more strongly than <b>how long</b> people slept. Same bedtime beats more hours.
+          <div class="cite"><b>Windred et al. (2024), <i>Sleep</i> 47(1):zsad253.</b></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Log · today</div>
+        <h2>Training</h2>
+        <div class="field" style="margin-top:0"><label>Type</label><div class="seg" id="segType"></div></div>
+        <div class="cols c2" style="margin-top:12px">
+          <div class="field" style="margin:0"><label>Minutes</label><input type="number" id="trainMin" min="0" max="400" placeholder="45"/></div>
+          <div class="field" style="margin:0"><label>Effort — could you hold a conversation?</label><div class="seg" id="segRPE"></div></div>
+        </div>
+        <div class="field"><label>What you actually did</label><input type="text" id="trainNote" placeholder="Squats 5×5, 20 min zone-2 bike"/></div>
+        <div class="note acc" style="margin-top:14px">
+          <b>Aerobic exercise physically enlarges the hippocampus.</b> In a one-year randomised trial of 120 older
+          adults, moderate aerobic walking increased anterior hippocampal volume by ~2% — effectively reversing one to
+          two years of age-related loss — and the increase tracked with improved spatial memory. The stretching
+          control group declined.
+          <div class="cite"><b>Erickson et al. (2011), <i>PNAS</i> 108(7):3017–3022.</b></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Log · today</div>
+        <h2>Daily inputs</h2>
+        <p class="sub">Tap what's true right now. These are the four the Mission Control body ring reads.</p>
+        <div class="toggles" id="toggles"></div>
+        <div class="field"><label>Notes — energy, soreness, anything worth remembering</label>
+          <textarea id="bodyNote" style="min-height:64px"></textarea></div>
+        <button class="btn primary wide" style="margin-top:14px" onclick="commit()">✓ Log the day — +25 XP</button>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card">
+        <div class="kicker">Weekly targets</div>
+        <h2>Where you stand</h2>
+        <div id="targets" style="margin-top:12px"></div>
+        <div class="cite" style="margin-top:14px"><b>150 min/week moderate aerobic activity + 2 muscle-strengthening
+          sessions</b> is the adult recommendation in the WHO 2020 guidelines, derived from systematic review of
+          all-cause mortality and cardiometabolic outcomes. <i>(Bull et al., 2020, British Journal of Sports Medicine
+          54:1451–1462.)</i></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Last 14 days</div>
+        <h2>Sleep</h2>
+        <svg class="chart" id="chSleep" viewBox="0 0 320 120" preserveAspectRatio="none"></svg>
+        <div class="tiny" id="chSleepL"></div>
+        <hr class="hr"/>
+        <h2>Training minutes</h2>
+        <svg class="chart" id="chTrain" viewBox="0 0 320 120" preserveAspectRatio="none"></svg>
+        <div class="tiny" id="chTrainL"></div>
+      </section>
+
+      <section class="card warnc">
+        <div class="kicker warn">Night rule</div>
+        <h2>Screens before bed</h2>
+        <p class="sub" style="margin-bottom:0">In a controlled inpatient study, reading on a light-emitting device for
+          4 hours before bed suppressed melatonin, delayed circadian timing by roughly 1.5 hours, took longer to fall
+          asleep, and left people measurably less alert the next morning — compared to reading a print book.</p>
+        <div class="cite" style="margin-top:10px"><b>Chang, Aeschbach, Duffy &amp; Czeisler (2015), <i>PNAS</i>
+          112(4):1232–1237.</b></div>
+        <a class="btn wide" href="debrief.html" style="margin-top:13px;display:block;text-align:center;text-decoration:none">🌙 Run the wind-down</a>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+const M='body';
+const TOGGLES=[
+  {k:'movement', label:'30+ min of movement'},
+  {k:'sunlight', label:'Daylight before noon'},
+  {k:'protein',  label:'Protein at every meal'},
+  {k:'hydrated', label:'2L+ water'},
+  {k:'noBooze',  label:'No alcohol'},
+  {k:'caffCut',  label:'No caffeine after 2pm'}
+];
+const QUAL=['Poor','Okay','Good','Excellent'];
+const TYPES=['Rest','Strength','Cardio','Mixed'];
+const RPE=['Easy','Moderate','Hard'];
+
+['sleepHours','bedtime','waketime','trainMin','trainNote','bodyNote'].forEach(f=>{
+  const el=document.getElementById(f);
+  el.value=FD.mod(M)[f]||'';
+  let t; el.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(()=>{
+    const p={}; p[f]=el.value; FD.setMod(M,p); paint();
+  },300); });
+});
+
+function segment(id,key,opts){
+  const box=document.getElementById(id), cur=FD.mod(M)[key];
+  box.innerHTML=opts.map(o=>'<button class="'+(cur===o?'on':'')+'" data-v="'+o+'">'+o+'</button>').join('');
+  FD.$$('button',box).forEach(b=>b.onclick=()=>{
+    const p={}; p[key]=b.dataset.v; FD.setMod(M,p);
+    segment(id,key,opts); paint();
+  });
+}
+function paintToggles(){
+  const d=FD.mod(M);
+  document.getElementById('toggles').innerHTML=TOGGLES.map(t=>
+    '<div class="tog'+(d[t.k]?' on':'')+'" data-k="'+t.k+'">'+
+    '<span style="font-size:15px">'+(d[t.k]?'✓':'○')+'</span><span>'+t.label+'</span></div>').join('');
+  FD.$$('#toggles .tog').forEach(el=>el.onclick=()=>{
+    const k=el.dataset.k, p={}; p[k]=!FD.mod(M)[k];
+    FD.setMod(M,p);
+    if(p[k]) FD.addXP(3,'Body input logged');
+    paintToggles(); paint();
+  });
+}
+function commit(){
+  const d=FD.mod(M);
+  if(!d.sleepHours){ FD.toast('⚠️ Log your sleep hours at least'); document.getElementById('sleepHours').focus(); return; }
+  if(!d.committed){ FD.setMod(M,{committed:true}); FD.addXP(25,'Airframe logged'); FD.confetti(24); }
+  else FD.toast('Updated');
+  paint();
+}
+
+/* ---------- analytics ---------- */
+function dayMod(k){ return ((FD.read().days[k]||{}).mods||{}).body||{}; }
+function weekStats(){
+  let min=0,str=0;
+  FD.lastDays(7).forEach(k=>{
+    const b=dayMod(k);
+    if(b.trainMin) min+=Number(b.trainMin)||0;
+    if(b.trainType==='Strength'||b.trainType==='Mixed') str++;
+  });
+  return {min,str};
+}
+function toMin(t){ if(!t) return null; const p=t.split(':'); let m=+p[0]*60+ +p[1]; if(m<720) m+=1440; return m; }
+function regularity(){
+  const v=FD.lastDays(14).map(k=>toMin(dayMod(k).bedtime)).filter(x=>x!=null);
+  if(v.length<3) return null;
+  const mean=v.reduce((a,b)=>a+b,0)/v.length;
+  const sd=Math.sqrt(v.reduce((a,b)=>a+(b-mean)*(b-mean),0)/v.length);
+  return {sd:Math.round(sd), score:Math.max(0,Math.round(100-sd*1.4)), n:v.length};
+}
+function bars(svgId,labId,vals,max,color,unit){
+  const svg=document.getElementById(svgId), n=vals.length, w=320/n, pad=1.6;
+  svg.innerHTML=vals.map((v,i)=>{
+    const h=v?Math.max(2,(Math.min(v,max)/max)*106):0;
+    return '<rect x="'+(i*w+pad)+'" y="'+(112-h)+'" width="'+(w-pad*2)+'" height="'+h+'" rx="2" fill="'+
+      (v?color:'var(--line)')+'"><title>'+(v||0)+' '+unit+'</title></rect>';
+  }).join('')+'<line x1="0" y1="112" x2="320" y2="112" stroke="var(--line)" stroke-width="1"/>';
+  const got=vals.filter(v=>v);
+  document.getElementById(labId).textContent = got.length
+    ? 'Average '+(got.reduce((a,b)=>a+b,0)/got.length).toFixed(1)+' '+unit+' across '+got.length+' logged days'
+    : 'Nothing logged yet';
+}
+function target(nm,val,goal,unit){
+  return '<div class="tgt"><span class="nm">'+nm+'</span>'+
+    '<span class="bar '+(val>=goal?'good':'')+'"><i style="width:'+FD.pct(val,goal)+'%"></i></span>'+
+    '<span class="v">'+val+' / '+goal+' '+unit+'</span></div>';
+}
+function paint(){
+  const d=FD.mod(M), w=weekStats(), r=regularity();
+  document.getElementById('kSleep').textContent=d.sleepHours?d.sleepHours+'h':'—';
+  const sl=FD.lastDays(7).map(k=>Number(dayMod(k).sleepHours)||0).filter(Boolean);
+  document.getElementById('kSleepAvg').textContent=sl.length
+    ? '7-day avg '+(sl.reduce((a,b)=>a+b,0)/sl.length).toFixed(1)+'h' : '7-day avg —';
+  document.getElementById('kTrain').textContent=w.min;
+  document.getElementById('kTrainBar').style.width=FD.pct(w.min,150)+'%';
+  document.getElementById('kStr').textContent=w.str;
+  document.getElementById('kReg').textContent=r?r.score:'—';
+  document.getElementById('kRegS').textContent=r?('±'+r.sd+' min bedtime spread'):'Log 3+ bedtimes';
+
+  const avgSleep=sl.length?sl.reduce((a,b)=>a+b,0)/sl.length:0;
+  document.getElementById('targets').innerHTML=
+    target('Aerobic',w.min,150,'min')+
+    target('Strength',w.str,2,'sessions')+
+    target('Sleep avg',avgSleep.toFixed(1),7.5,'h')+
+    target('Daylight',FD.lastDays(7).filter(k=>dayMod(k).sunlight).length,7,'days')+
+    target('Movement',FD.lastDays(7).filter(k=>dayMod(k).movement).length,7,'days');
+
+  bars('chSleep','chSleepL',FD.lastDays(14).map(k=>Number(dayMod(k).sleepHours)||0),10,'var(--accent)','h');
+  bars('chTrain','chTrainL',FD.lastDays(14).map(k=>Number(dayMod(k).trainMin)||0),90,'var(--good)','min');
+}
+segment('segQual','sleepQuality',QUAL);
+segment('segType','trainType',TYPES);
+segment('segRPE','rpe',RPE);
+paintToggles(); paint();
+</script>
+</body>
+</html>

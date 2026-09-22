@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Evidence Log — Flight Deck</title>
+<link rel="stylesheet" href="assets/core.css?v=1"/>
+<style>
+  .filters{display:flex;gap:7px;flex-wrap:wrap;margin:18px 0}
+  .filters button{
+    padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--panel);
+    color:var(--muted);font-weight:850;font-size:12px;cursor:pointer;font-family:inherit;transition:.15s
+  }
+  .filters button.on{background:var(--accent);color:#fff;border-color:transparent}
+  .filters button:hover{border-color:var(--line2)}
+  .ev{border:1px solid var(--line);border-radius:var(--r);background:var(--panel);padding:19px;margin-bottom:12px}
+  .ev h3{font-size:16px;margin:0 0 3px;letter-spacing:-.02em}
+  .ev .src{font-size:12px;color:var(--accent);font-weight:800;margin-bottom:10px;line-height:1.45}
+  .ev .find{font-size:13.5px;line-height:1.6;color:var(--text)}
+  .ev .use{font-size:12.5px;color:var(--muted);margin-top:11px;padding-top:11px;border-top:1px solid var(--line);line-height:1.5}
+  .ev .use b{color:var(--text)}
+  .ev .strength{float:right;margin-left:10px}
+  .search{margin-bottom:16px}
+  .grp{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);font-weight:900;margin:26px 0 12px}
+  .caveat{border-left:3px solid var(--warn);padding-left:16px;margin-bottom:18px}
+  .caveat h4{margin:0 0 5px;font-size:14px}
+  .caveat p{margin:0;font-size:13px;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body data-root="." data-module="evidence">
+<div class="wrap wrap-narrow">
+
+  <div class="phead">
+    <div class="kicker">📚 Reference</div>
+    <h1>Evidence Log</h1>
+    <div class="lede">Every mechanic in Flight Deck, the study it came from, and where it's actually used. Where the
+      evidence is weaker than the popular version of the claim, it says so.</div>
+  </div>
+
+  <div class="note acc">
+    <b>How to read the strength labels.</b>
+    <span class="pill on">Strong</span> means a meta-analysis or multiple randomised trials.
+    <span class="pill acc">Good</span> means at least one well-powered randomised or controlled study.
+    <span class="pill due">Suggestive</span> means real evidence exists but it's limited, single-study, or contested.
+    Nothing here is labelled strong on the basis of one paper.
+  </div>
+
+  <div class="search">
+    <input type="text" id="q" placeholder="Search — e.g. sleep, spacing, habits, dopamine…" style="margin-top:16px"/>
+  </div>
+  <div class="filters" id="filters"></div>
+  <div id="list"></div>
+
+  <section class="card" style="margin-top:30px">
+    <div class="kicker warn">Honesty section</div>
+    <h2>What this system deliberately leaves out</h2>
+    <p class="sub">A productivity system that only cites the findings that support it isn't evidence-based, it's
+      decorated. These are ideas you'll find in almost every self-improvement app, left out on purpose.</p>
+
+    <div class="caveat">
+      <h4>Ego depletion / “willpower is a finite battery”</h4>
+      <p>The original glucose-and-willpower model has failed to replicate in large pre-registered multi-lab attempts.
+        Nothing in Flight Deck is built on “conserve your willpower.” The system instead assumes willpower is
+        unreliable at any hour, which is why it leans on environment design and pre-commitment.</p>
+    </div>
+
+    <div class="caveat">
+      <h4>Learning styles (visual / auditory / kinaesthetic)</h4>
+      <p>Repeatedly tested, repeatedly unsupported. Matching instruction to a claimed style does not improve learning.
+        There is no “what kind of learner are you” step in this app for that reason.</p>
+    </div>
+
+    <div class="caveat">
+      <h4>“It takes 21 days to build a habit”</h4>
+      <p>This comes from a 1960 surgeon's observation about patients adjusting to amputations, not a study of habits.
+        The measured figure is a median of 66 days with enormous individual variation, which is what the automaticity
+        bars in the Habit Reactor are scaled to.</p>
+    </div>
+
+    <div class="caveat">
+      <h4>“Dopamine detox”</h4>
+      <p>Not a neuroscientific concept. Dopamine isn't a pleasure reservoir you drain and refill. The Firewall module
+        works on urge tolerance and environment, which have actual trial data behind them, rather than on any claim
+        about receptor levels.</p>
+    </div>
+
+    <div class="caveat">
+      <h4>Grit as a distinct predictor</h4>
+      <p>A meta-analysis found grit correlates highly with conscientiousness and adds little predictive power for
+        performance beyond it. Nothing here asks you to rate your grit, and the system is designed so that consistency
+        comes from structure rather than from a personality trait you either have or don't.</p>
+    </div>
+
+    <div class="caveat">
+      <h4>The Pomodoro interval specifically</h4>
+      <p>Timeboxing works, but 25 minutes has no special empirical status — it was one man's kitchen timer. The
+        evidence supports <i>breaks</i> and <i>bounded sessions</i>, not that number. That's why Study Flight offers
+        25, 50 and 90 minutes and doesn't claim one is correct.</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="kicker">Design note</div>
+    <h2>On making it addictive</h2>
+    <p class="sub" style="margin-bottom:12px">You asked for addictive, and the streaks, XP, levels, variable-ratio
+      bonuses and completion rings here are taken straight from the mechanics that make consumer apps hard to put
+      down. They work, and they're pointed at things worth doing.</p>
+    <p class="sub" style="margin-bottom:12px">Three deliberate limits, so the mechanics stay in service of the goal:
+      there's no infinite feed and nothing to scroll for its own sake; you earn a streak freeze every seven days so a
+      single missed day can't trigger the all-or-nothing collapse that usually ends these attempts; and the app never
+      notifies you or asks for your attention — you come to it, at two times you chose.</p>
+    <p class="sub" style="margin-bottom:0">If you ever notice you're optimising the XP number rather than the thing
+      the XP is standing in for, that's the signal to ignore the score for a week. The number is scaffolding. It's
+      supposed to become unnecessary.</p>
+  </section>
+
+  <div class="note" style="margin-top:20px">
+    <b>Reference list is abbreviated.</b> Author, year, journal, volume and pages are given so you can find each paper
+    directly. Where a finding is summarised, it reflects the paper's primary reported result — go to the source before
+    you rely on any of it for anything that matters.
+  </div>
+</div>
+
+<script src="assets/core.js?v=1"></script>
+<script>
+const EV=[
+{g:'Learning',s:'strong',t:'Retrieval practice (the testing effect)',
+ src:'Roediger &amp; Karpicke (2006), Psychological Science 17(3):249–255.',
+ f:'Students who read a passage once then practised recalling it repeatedly outperformed students who reread it four times, on a test one week later — despite the rereading group predicting they would do better. Retrieval changes memory; it does not merely measure it.',
+ u:'<b>Recall Bay</b> is built entirely on this. <b>Study Flight</b>\'s cruise checklist makes you close the book and write from memory before checking.'},
+{g:'Learning',s:'strong',t:'Retrieval beats elaborative study',
+ src:'Karpicke &amp; Blunt (2011), Science 331(6018):772–775.',
+ f:'Practising retrieval produced better learning of science texts than elaborative studying with concept mapping — including on measures designed to favour the concept-mapping group.',
+ u:'Why <b>Recall Bay</b> is placed above note-taking in the daily flight plan.'},
+{g:'Learning',s:'strong',t:'Spacing effect',
+ src:'Cepeda, Pashler, Vul, Wixted &amp; Rohrer (2006), Psychological Bulletin 132(3):354–380.',
+ f:'Meta-analysis of 254 studies (~14,000 participants): distributing the same amount of study across separated sessions produced better retention than massing it, with the benefit growing as the delay before testing grew.',
+ u:'The scheduling algorithm in <b>Recall Bay</b> — intervals expand as you succeed rather than being fixed.'},
+{g:'Learning',s:'strong',t:'Which study techniques actually work',
+ src:'Dunlosky, Rawson, Marsh, Nathan &amp; Willingham (2013), Psychological Science in the Public Interest 14(1):4–58.',
+ f:'A systematic review of ten common learning techniques rated only two as high utility: practice testing and distributed practice. Highlighting, rereading, summarisation and imagery-based methods were rated low.',
+ u:'The two high-utility techniques are the two daily modules. The low-utility ones are absent by design.'},
+{g:'Learning',s:'good',t:'Interleaving',
+ src:'Rohrer &amp; Taylor (2007), Instructional Science 35:481–498. · Kornell &amp; Bjork (2008), Psychological Science 19(6):585–592.',
+ f:'Mixing problem types within a practice session produced worse performance during practice but substantially better performance on a delayed test than practising one type at a time. Learners consistently judge the worse method to be better.',
+ u:'<b>Recall Bay</b> shuffles the due queue rather than grouping by deck.'},
+{g:'Learning',s:'good',t:'Desirable difficulties',
+ src:'Bjork &amp; Bjork (2011), in Psychology and the Real World, pp. 56–64.',
+ f:'Conditions that slow acquisition and feel harder — spacing, interleaving, retrieval, varied practice — often produce better long-term retention and transfer. Fluency during study is a poor guide to actual learning.',
+ u:'Why the app never lets you mark a card "easy" without extending its interval, and why it warns against generous self-grading.'},
+{g:'Habit',s:'strong',t:'How long habits actually take',
+ src:'Lally, van Jaarsveld, Potts &amp; Wardle (2010), European Journal of Social Psychology 40(6):998–1009.',
+ f:'96 people each adopted one new daily behaviour and rated its automaticity for 12 weeks. Median time to plateau was 66 days, ranging from 18 to 254 depending on behaviour complexity. Missing a single day did not measurably affect the trajectory.',
+ u:'The 66-rep automaticity bars in <b>Habit Reactor</b>, the never-miss-twice warning, and the weekly streak freeze.'},
+{g:'Habit',s:'strong',t:'Habits are cued by context, not motivation',
+ src:'Wood &amp; Neal (2007), Psychological Review 114(4):843–863.',
+ f:'Habitual behaviour is triggered by recurring features of the environment through direct context–response associations, largely bypassing intention. Changing context disrupts habits more reliably than changing goals.',
+ u:'Every habit in <b>Habit Reactor</b> requires an anchor and a location, not just a name.'},
+{g:'Habit',s:'strong',t:'Implementation intentions (if-then plans)',
+ src:'Gollwitzer &amp; Sheeran (2006), Advances in Experimental Social Psychology 38:69–119.',
+ f:'Meta-analysis of 94 independent tests (8,461 participants): specifying when, where and how you will act produced a medium-to-large improvement in goal attainment (d = 0.65) over holding the goal alone.',
+ u:'<b>Preflight</b> step 4, the <b>Firewall</b> rule library, and the repair rule in <b>Debrief</b>.'},
+{g:'Habit',s:'good',t:'Mental contrasting (WOOP)',
+ src:'Oettingen (2012), European Review of Social Psychology 23(1):1–63.',
+ f:'Fantasising about a positive future in isolation reduced effort and attainment. Contrasting the desired future against the present obstacle, then forming an if-then plan, increased both — but only when expectations of success were reasonably high.',
+ u:'The full W-O-O-P sequence in <b>Preflight</b>, and the known-obstacle field on every goal in <b>Flight Plan</b>.'},
+{g:'Goals',s:'strong',t:'Specific, difficult goals',
+ src:'Locke &amp; Latham (2002), American Psychologist 57(9):705–717.',
+ f:'Thirty-five years of research across 100+ tasks: specific and difficult goals produce higher performance than vague or "do your best" goals, conditional on commitment, feedback and the task not exceeding ability.',
+ u:'<b>Flight Plan</b> refuses to save a goal without a target number. <b>Preflight</b> asks for outcomes, not intentions.'},
+{g:'Goals',s:'strong',t:'Monitoring progress improves attainment',
+ src:'Harkin, Webb, Chang, Prestwich, Conner, Kellar, Benn &amp; Sheeran (2016), Psychological Bulletin 142(2):198–229.',
+ f:'Meta-analysis of 138 studies (19,951 participants): prompting progress monitoring significantly increased goal attainment, with larger effects when progress was physically recorded or reported publicly.',
+ u:'The core justification for the whole app: the heatmap, the streak, the weekly scorecard, the pace projections.'},
+{g:'Goals',s:'good',t:'The fresh start effect',
+ src:'Dai, Milkman &amp; Riis (2014), Management Science 60(10):2563–2582.',
+ f:'Google searches for "diet", gym visits and commitment-contract creation all spiked after temporal landmarks — the start of a week, month, year, or a birthday — consistent with landmarks creating a break from an imperfect past self.',
+ u:'The 120-day program clock, and the prompt in <b>Flight Plan</b> to start on a date that means something.'},
+{g:'Goals',s:'good',t:'Goal-gradient / endowed progress',
+ src:'Kivetz, Urminsky &amp; Zheng (2006), Journal of Marketing Research 43(1):39–58.',
+ f:'People accelerate effort as they get closer to a reward. Customers given a 12-stamp card with 2 stamps pre-filled completed it faster than those given a 10-stamp card with none — identical work, different framing.',
+ u:'Level bars everywhere show distance to the <i>next</i> level rather than total accumulated, and early levels are deliberately cheap.'},
+{g:'Goals',s:'good',t:'Precommitment beats resolve',
+ src:'Ariely &amp; Wertenbroch (2002), Psychological Science 13(3):219–224.',
+ f:'Students allowed to set their own binding deadlines chose to impose them, and outperformed students left to self-pace — though they still set them less optimally than evenly-spaced imposed deadlines. People know they will procrastinate.',
+ u:'The commitment-device checklist in <b>Firewall</b>, and staging tomorrow\'s first action in <b>Debrief</b>.'},
+{g:'Goals',s:'good',t:'Temptation bundling',
+ src:'Milkman, Minson &amp; Volpp (2014), Management Science 60(2):283–299.',
+ f:'Gym-goers who could only access their favourite audiobooks at the gym increased attendance substantially — around 51% in the full-treatment condition initially, decaying over time but still positive.',
+ u:'The bundling setup in <b>Firewall</b>.'},
+{g:'Goals',s:'good',t:'Identity-based motivation',
+ src:'Oyserman, Bybee &amp; Terry (2006), Journal of Personality and Social Psychology 91(1):188–204.',
+ f:'An intervention helping students connect current academic effort to their possible future selves improved grades, attendance and classroom behaviour, with effects persisting two years later.',
+ u:'The identity line in <b>Preflight</b> and the identity field on every goal in <b>Flight Plan</b>.'},
+{g:'Mood',s:'strong',t:'Three good things',
+ src:'Seligman, Steen, Park &amp; Peterson (2005), American Psychologist 60(5):410–421.',
+ f:'Randomised placebo-controlled trial of five positive interventions. Writing three things that went well and their causes, nightly for one week, increased happiness and decreased depressive symptoms at follow-ups up to six months later — after the exercise had stopped.',
+ u:'<b>Debrief</b> step 2, including the "why did it happen" prompt, which is the active ingredient.'},
+{g:'Mood',s:'good',t:'Gratitude journaling',
+ src:'Emmons &amp; McCullough (2003), Journal of Personality and Social Psychology 84(2):377–389.',
+ f:'Participants assigned to weekly gratitude listing reported better wellbeing and more optimism than those listing hassles or neutral events, and in one study exercised more.',
+ u:'Supports the same <b>Debrief</b> step.'},
+{g:'Mood',s:'good',t:'Self-compassion beats self-criticism after failure',
+ src:'Breines &amp; Chen (2012), Personality and Social Psychology Bulletin 38(9):1133–1143.',
+ f:'Across four experiments, a brief self-compassion prompt after a failure increased motivation to improve, time spent studying for a make-up test, and belief that weaknesses were changeable — more than a self-esteem boost or no prompt.',
+ u:'<b>Debrief</b> step 4, and the three pre-written prompts for bad, middling and good days.'},
+{g:'Mood',s:'good',t:'Expressive writing',
+ src:'Frattaroli (2006), Psychological Bulletin 132(6):823–865. · Pennebaker &amp; Beall (1986), Journal of Abnormal Psychology 95(3):274–281.',
+ f:'Meta-analysis of 146 studies found a small but significant positive effect of experimental disclosure writing on psychological and physical health outcomes. Effects are modest — smaller than early enthusiasm suggested.',
+ u:'The friction and cause fields in <b>Debrief</b> and <b>Weekly Debrief</b>.'},
+{g:'Mood',s:'good',t:'Cyclic sighing',
+ src:'Balban, Neri, Kogon, Weed, Nouriani, Jo, Holl, Zeitzer, Spiegel &amp; Huberman (2023), Cell Reports Medicine 4(1):100895.',
+ f:'108 adults randomised to five minutes daily of cyclic sighing, box breathing, cyclic hyperventilation, or mindfulness meditation for one month. All improved mood; cyclic sighing produced the greatest increase in positive affect and the largest reduction in respiratory rate.',
+ u:'The default protocol in <b>Cabin Pressure</b>, and why every protocol there has a longer exhale than inhale.'},
+{g:'Mood',s:'good',t:'Urge surfing',
+ src:'Bowen &amp; Marlatt (2009), Psychology of Addictive Behaviors 23(4):666–671.',
+ f:'Student smokers given brief mindfulness-based urge-surfing instructions — observe the craving, note its physical qualities, let it pass without acting — smoked significantly fewer cigarettes over the following week than a control group given standard coping instructions.',
+ u:'The ten-minute delay timer and the rotating observation script in <b>Firewall</b>.'},
+{g:'Mood',s:'good',t:'Procrastination is mood repair',
+ src:'Sirois &amp; Pychyl (2013), Social and Personality Psychology Compass 7(2):115–127.',
+ f:'Procrastination is better explained as short-term mood regulation — avoiding the negative affect a task provokes — than as poor time management. This predicts that reducing the aversiveness of starting matters more than scheduling.',
+ u:'The five-minute takeoff, the aborted-takeoff card, and why <b>Study Flight</b> asks for the exact section rather than the subject.'},
+{g:'Body',s:'strong',t:'Sleep consolidates memory',
+ src:'Rasch &amp; Born (2013), Physiological Reviews 93(2):681–766.',
+ f:'Comprehensive review: sleep after learning actively strengthens and reorganises newly encoded memories, with slow-wave sleep implicated in declarative consolidation. Sleep deprivation after learning impairs later retention.',
+ u:'The framing of the <b>Debrief</b> wind-down as the last step of studying rather than what follows it.'},
+{g:'Body',s:'strong',t:'Aerobic exercise grows the hippocampus',
+ src:'Erickson et al. (2011), PNAS 108(7):3017–3022.',
+ f:'One-year randomised trial, 120 older adults. Moderate aerobic walking increased anterior hippocampal volume by about 2% — reversing one to two years of typical age-related loss — and volume increases tracked with improved spatial memory. The stretching control group declined.',
+ u:'Why <b>Airframe</b> is a required daily module rather than an optional extra.'},
+{g:'Body',s:'strong',t:'Physical activity guidelines',
+ src:'Bull et al. (2020), British Journal of Sports Medicine 54:1451–1462 (WHO 2020 guidelines).',
+ f:'Systematic-review-based recommendation for adults: 150–300 minutes of moderate aerobic activity weekly plus muscle-strengthening on 2+ days, with benefits observed across mortality, cardiometabolic and mental health outcomes.',
+ u:'The exact weekly targets in <b>Airframe</b>.'},
+{g:'Body',s:'good',t:'Sleep regularity beats sleep duration',
+ src:'Windred, Burns, Lane, Saxena, Rutter, Cain &amp; Phillips (2024), Sleep 47(1):zsad253.',
+ f:'In roughly 60,000 UK Biobank participants wearing accelerometers, sleep regularity was a stronger predictor of all-cause mortality risk than sleep duration.',
+ u:'The bedtime-consistency score in <b>Airframe</b>, computed from the spread of your logged bedtimes.'},
+{g:'Body',s:'good',t:'Morning light sets the clock',
+ src:'Wright, McHill, Birks, Griffin, Rusterholz &amp; Chinoy (2013), Current Biology 23(16):1554–1558.',
+ f:'A week of camping with only natural light advanced circadian timing by roughly two hours and synchronised melatonin onset to sunset, reversing the delay produced by ordinary indoor electrical lighting.',
+ u:'The first item on the <b>Preflight</b> wake protocol, and the daylight toggle in <b>Airframe</b>.'},
+{g:'Body',s:'good',t:'Evening screens delay sleep',
+ src:'Chang, Aeschbach, Duffy &amp; Czeisler (2015), PNAS 112(4):1232–1237.',
+ f:'Inpatient crossover study: reading on a light-emitting device for four hours before bed suppressed melatonin, delayed circadian timing by about 1.5 hours, lengthened time to fall asleep, reduced REM, and impaired next-morning alertness versus a print book.',
+ u:'The wind-down checklist in <b>Debrief</b>, and the instruction to put the phone down at the end of it.'},
+{g:'Engagement',s:'strong',t:'Intermittent reinforcement sustains behaviour',
+ src:'Ferster &amp; Skinner (1957), Schedules of Reinforcement. Appleton-Century-Crofts.',
+ f:'Variable-ratio reinforcement schedules produce higher and more persistent response rates, and greater resistance to extinction, than fixed schedules. This is the mechanism underneath slot machines and most engagement loops.',
+ u:'The 12% chance of a double-XP "tailwind" on any award. Used deliberately, pointed at behaviour you chose.'},
+{g:'Engagement',s:'strong',t:'Autonomy, competence, relatedness',
+ src:'Ryan &amp; Deci (2000), American Psychologist 55(1):68–78.',
+ f:'Self-determination theory: intrinsic motivation is supported by autonomy, competence and relatedness, and external rewards can undermine intrinsic motivation when they are experienced as controlling rather than informational.',
+ u:'Why every habit, goal and target is written by you rather than prescribed; why XP is framed as feedback on competence; and why nothing here nags or notifies. It is also why the app tells you the score is scaffolding.'},
+{g:'Engagement',s:'suggestive',t:'Loss aversion and streaks',
+ src:'Kahneman &amp; Tversky (1979), Econometrica 47(2):263–291.',
+ f:'Losses loom larger than equivalent gains in decision-making under risk. Streak mechanics exploit this: an unbroken run becomes an endowment you don\'t want to lose.',
+ u:'The streak counter — and the streak freeze, which exists specifically to blunt the all-or-nothing collapse that loss aversion can trigger after one missed day.'}
+];
+let filter='All', q='';
+const GROUPS=['All','Learning','Habit','Goals','Mood','Body','Engagement'];
+const LABEL={strong:'Strong',good:'Good',suggestive:'Suggestive'};
+const CLS={strong:'pill on',good:'pill acc',suggestive:'pill due'};
+
+document.getElementById('filters').innerHTML=GROUPS.map(g=>
+  '<button data-g="'+g+'" class="'+(g===filter?'on':'')+'">'+g+
+  (g==='All'?' ('+EV.length+')':' ('+EV.filter(e=>e.g===g).length+')')+'</button>').join('');
+FD.$$('#filters button').forEach(b=>b.onclick=()=>{
+  filter=b.dataset.g;
+  FD.$$('#filters button').forEach(x=>x.classList.toggle('on',x.dataset.g===filter));
+  paint();
+});
+document.getElementById('q').addEventListener('input',e=>{ q=e.target.value.toLowerCase(); paint(); });
+
+function paint(){
+  const list=EV.filter(e=>(filter==='All'||e.g===filter)&&
+    (!q||(e.t+e.src+e.f+e.u).toLowerCase().includes(q)));
+  const groups=[...new Set(list.map(e=>e.g))];
+  document.getElementById('list').innerHTML = list.length ? groups.map(g=>
+    '<div class="grp">'+g+'</div>'+list.filter(e=>e.g===g).map(e=>
+      '<div class="ev"><span class="'+CLS[e.s]+' strength">'+LABEL[e.s]+'</span>'+
+      '<h3>'+e.t+'</h3><div class="src">'+e.src+'</div>'+
+      '<div class="find">'+e.f+'</div>'+
+      '<div class="use"><b>Used in:</b> '+e.u+'</div></div>').join('')).join('')
+    : '<div class="empty">Nothing matches that search.</div>';
+}
+paint();
+</script>
+</body>
+</html>
