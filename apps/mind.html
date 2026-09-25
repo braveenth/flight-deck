@@ -152,7 +152,7 @@ const PROTOS=[
    desc:'No pattern. Breathe normally, notice when the mind leaves, bring it back. The orb holds still.',
    phases:[{l:'Sit. Return when you drift.',s:.7,d:10}]}
 ];
-let proto=PROTOS[0], len=5, left=len*60, running=false, tick=null, phaseT=null, pi=0, cycles=0, sound=true, elapsed=0;
+let proto=PROTOS[0], len=5, left=len*60, running=false, tick=null, phaseT=null, pi=0, cycles=0, sound=true, elapsed=0, startedAt=null;
 
 function paintProtos(){
   document.getElementById('protos').innerHTML=PROTOS.map(p=>
@@ -188,6 +188,7 @@ function runPhase(){
 function toggle(){ running?stop(true):start(); }
 function start(){
   running=true; pi=0;
+  if(startedAt==null) startedAt=FD.dayMinutes();
   document.getElementById('startBtn').textContent='❚❚ PAUSE';
   runPhase();
   tick=setInterval(()=>{
@@ -207,7 +208,11 @@ function stop(reset){
 function bank(){
   const mins=Math.round(elapsed/60);
   const d=FD.mod(M);
-  FD.setMod(M,{sessions:(d.sessions||0)+1, minutes:(d.minutes||0)+mins, protocol:proto.id});
+  const endMin=FD.dayMinutes();
+  const log=(d.log||[]).concat([{start:(startedAt!=null?startedAt:Math.max(0,endMin-mins)),
+                                 end:endMin, mins:mins, protocol:proto.id}]);
+  FD.setMod(M,{sessions:(d.sessions||0)+1, minutes:(d.minutes||0)+mins, protocol:proto.id, log:log});
+  startedAt=null;
   FD.mutate(s=>{ s.records.breathMinutes=(s.records.breathMinutes||0)+mins; });
   FD.addXP(Math.min(30,10+mins*2),mins+' min of '+proto.name);
   paint();

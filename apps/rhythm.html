@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Rhythm — Flight Deck</title>
+<link rel="stylesheet" href="../assets/core.css?v=1"/>
+<style>
+  .chart{width:100%;display:block;overflow:visible}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{
+    padding:8px 13px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);
+    color:var(--text);font-weight:850;font-size:12px;cursor:pointer;font-family:inherit;transition:.15s
+  }
+  .seg button.on{background:var(--accent);color:#fff;border-color:transparent}
+  .legend{display:flex;gap:15px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px;font-weight:800}
+  .legend i{display:inline-block;width:11px;height:3px;border-radius:2px;margin-right:5px;vertical-align:middle}
+  .legend i.sq{height:9px;width:9px;border-radius:2px}
+
+  /* ---- daily timeline ---- */
+  .tlhead{display:flex;margin:0 0 6px 74px;font-size:9px;color:var(--faint);font-weight:800;letter-spacing:.06em}
+  .tlhead span{flex:1;text-align:left}
+  .tlrow{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .tld{width:64px;flex:none;font-size:10.5px;color:var(--muted);font-weight:800;font-family:var(--mono);text-align:right}
+  .tld.wknd{color:var(--accent2)}
+  .tltrack{
+    position:relative;flex:1;height:20px;border-radius:5px;background:var(--panel2);
+    border:1px solid var(--line);overflow:hidden;
+    background-image:repeating-linear-gradient(90deg,transparent 0,transparent calc(12.5% - 1px),var(--line) calc(12.5% - 1px),var(--line) 12.5%)
+  }
+  .tltrack .blk{position:absolute;top:3px;bottom:3px;background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 72%,black));
+    border-radius:3px;min-width:2px}
+  .tltrack .br{position:absolute;top:7px;bottom:7px;background:var(--good);border-radius:2px;min-width:2px}
+  .tltrack .mk{position:absolute;top:0;bottom:0;width:2px;border-radius:1px}
+  .tltrack .mk.pre{background:var(--warn);box-shadow:0 0 5px var(--warn)}
+  .tltrack .mk.deb{background:var(--accent2);box-shadow:0 0 5px var(--accent2)}
+  .tlempty{opacity:.4}
+
+  .gap{display:flex;align-items:baseline;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+  .gap:last-child{border:0}
+  .gap .l{font-size:12.5px;color:var(--muted);flex:1;line-height:1.4}
+  .gap .v{font-size:18px;font-weight:900;letter-spacing:-.03em;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .drift{padding:16px;border-radius:var(--r-sm);font-size:14px;line-height:1.6;font-weight:700}
+  .drift.later{background:color-mix(in srgb,var(--warn) 9%,var(--panel2));border:1px solid color-mix(in srgb,var(--warn) 36%,var(--line))}
+  .drift.earlier{background:color-mix(in srgb,var(--good) 9%,var(--panel2));border:1px solid color-mix(in srgb,var(--good) 36%,var(--line))}
+  .drift.flat{background:var(--panel2);border:1px solid var(--line)}
+  @media(max-width:640px){ .tld{width:46px;font-size:9.5px} .tlhead{margin-left:56px} }
+</style>
+</head>
+<body data-root=".." data-module="rhythm">
+<div class="wrap">
+
+  <div class="phead">
+    <div class="kicker">🕰️ Anytime · your working clock</div>
+    <h1>Rhythm</h1>
+    <div class="lede">When you actually start, when you actually stop, and what happens in the gaps. Every Preflight,
+      study block, breathing session and Debrief is timestamped — this is what those timestamps say about you.</div>
+  </div>
+
+  <div class="cols c4">
+    <div class="stat"><div class="n" id="kStart">—</div><div class="l">Typical start</div><div class="sm" id="kStartS">Preflight committed</div></div>
+    <div class="stat"><div class="n" id="kEnd">—</div><div class="l">Typical finish</div><div class="sm" id="kEndS">Debrief committed</div></div>
+    <div class="stat"><div class="n" id="kSpan">—</div><div class="l">Typical day length</div><div class="sm" id="kSpanS">Start to finish</div></div>
+    <div class="stat"><div class="n" id="kVar">—</div><div class="l">Start consistency</div><div class="sm" id="kVarS">Spread around the median</div></div>
+  </div>
+
+  <div class="note warn" id="noData" style="display:none;margin-top:16px">
+    <b>Nothing timestamped yet.</b> Timing is recorded from the moment you commit a Preflight, land a study block,
+    finish a breathing session, or close a Debrief. Run a full day and this page fills in. Days logged before
+    timestamping existed will show as empty rows.
+  </div>
+
+  <div class="row" style="margin-top:16px">
+    <div class="seg" id="rangeSeg"></div>
+    <span class="tiny right" id="rangeNote"></span>
+  </div>
+
+  <div class="cols main" style="margin-top:16px">
+    <div class="stack">
+
+      <section class="card">
+        <div class="kicker">Drift</div>
+        <h2>Start and finish over time</h2>
+        <p class="sub">Each dot is one day. Flat lines mean a stable schedule; a line sloping down-right means you're
+          drifting later. The dashed lines are your medians.</p>
+        <svg class="chart" id="chTimes" viewBox="0 0 660 290" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="legend">
+          <span><i style="background:var(--warn)"></i>Preflight — day start</span>
+          <span><i style="background:var(--accent2)"></i>Debrief — day close</span>
+          <span class="right" id="timesCount"></span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Shape of the day</div>
+        <h2>Daily timeline</h2>
+        <p class="sub">Every day laid out end to end. Solid bars are study blocks — the space between them is the
+          thing worth looking at.</p>
+        <div id="timeline"></div>
+        <div class="legend">
+          <span><i class="sq" style="background:var(--accent)"></i>Study block</span>
+          <span><i class="sq" style="background:var(--good)"></i>Breathing</span>
+          <span><i style="background:var(--warn)"></i>Preflight</span>
+          <span><i style="background:var(--accent2)"></i>Debrief</span>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Dead zones</div>
+        <h2>When you actually work</h2>
+        <p class="sub">Total focused minutes by hour of day across the window. The empty columns are the hours you
+          keep telling yourself you'll use.</p>
+        <svg class="chart" id="chHours" viewBox="0 0 660 200" preserveAspectRatio="xMidYMid meet"></svg>
+        <div class="tiny" id="hoursNote" style="margin-top:9px"></div>
+      </section>
+
+    </div>
+
+    <div class="stack">
+
+      <section class="card accent">
+        <div class="kicker">Between the blocks</div>
+        <h2>Gaps</h2>
+        <div id="gaps"></div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Are you sliding?</div>
+        <h2>Trend</h2>
+        <div id="drift"></div>
+        <div class="tiny" style="margin-top:11px">Compares the first half of the window against the second half.
+          Needs at least three timed days in each half.</div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Setting</div>
+        <h2>When your day rolls over</h2>
+        <p class="sub">Your day ends when you sleep, not at midnight. Work and a Debrief done before this hour count
+          toward the day that just ended.</p>
+        <div class="field" style="margin-top:0">
+          <label>Rollover hour</label>
+          <select id="rollSel"></select>
+        </div>
+        <div class="note acc" id="rollNote" style="margin-top:13px"></div>
+        <div class="tiny" style="margin-top:10px">Set it to midnight to turn the behaviour off entirely. Changing it
+          re-attributes <b>future</b> entries only — nothing already logged moves.</div>
+      </section>
+
+      <section class="card">
+        <div class="kicker">Why this matters</div>
+        <h2>Timing is a variable you control</h2>
+        <div class="note">
+          <b>Consistency beats optimisation.</b> The gap between when you sleep on free days and on scheduled days —
+          "social jetlag" — is associated with worse health and mood outcomes independent of how much sleep you get.
+          A schedule that holds is worth more than a schedule that's theoretically ideal.
+          <div class="cite"><b>Wittmann, Dinich, Merrow &amp; Roenneberg (2006), <i>Chronobiology International</i>
+            23(1–2):497–509.</b></div>
+        </div>
+        <div class="note" style="margin-top:11px">
+          <b>Cognitive performance varies across the day</b>, and the direction depends on your chronotype and the
+          task — there's no universally correct hour to study. The hour histogram above is how you find <i>your</i>
+          answer rather than adopting someone else's.
+          <div class="cite"><b>Schmidt, Collette, Cajochen &amp; Peigneux (2007), <i>Cognitive Neuropsychology</i>
+            24(7):755–789.</b></div>
+        </div>
+        <div class="tiny" style="margin-top:12px">
+          Note that this page shows <i>when</i> you worked, not how well. Cross-reference it with day ratings in
+          <a href="recorder.html">Flight Recorder</a> before you conclude a particular hour is your best one.
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script src="../assets/core.js?v=1"></script>
+<script>
+let RANGE = 30;
+const R0 = () => FD.rollover()*60;              // window start in day-minutes
+const SPAN = 1440;
+
+/* ---------- data ---------- */
+function dayData(k){
+  const m = ((FD.read().days[k]||{}).mods)||{};
+  const blocks=(((m.study||{}).log)||[]).filter(l=>l.start!=null&&l.end!=null)
+                                        .slice().sort((a,b)=>a.start-b.start);
+  return {
+    key:k,
+    pre: (m.preflight&&m.preflight.at!=null) ? m.preflight.at : null,
+    deb: (m.debrief&&m.debrief.at!=null) ? m.debrief.at : null,
+    blocks: blocks,
+    breaths: (((m.mind||{}).log)||[]).filter(l=>l.start!=null),
+    studyMin: (m.study||{}).minutes||0
+  };
+}
+function days(){ return FD.lastDays(RANGE).map(dayData); }
+function median(a){
+  if(!a.length) return null;
+  const s=a.slice().sort((x,y)=>x-y), m=Math.floor(s.length/2);
+  return s.length%2 ? s[m] : Math.round((s[m-1]+s[m])/2);
+}
+function spread(a){                                // half the interquartile range
+  if(a.length<4) return null;
+  const s=a.slice().sort((x,y)=>x-y);
+  const q=p=>s[Math.min(s.length-1,Math.max(0,Math.round(p*(s.length-1))))];
+  return Math.round((q(.75)-q(.25))/2);
+}
+function dur(m){
+  if(m==null||isNaN(m)) return '—';
+  const n=Math.abs(Math.round(m)), h=Math.floor(n/60), mm=n%60;
+  const body = h ? (mm ? h+'h '+mm+'m' : h+'h') : mm+'m';
+  return (m<0?'−':'')+body;
+}
+
+/* ---------- chart: start & end over time ---------- */
+function drawTimes(ds){
+  const W=660,H=290,PL=40,PR=10,PT=10,PB=22;
+  const n=ds.length;
+  const x=i=> n>1 ? PL+i*((W-PL-PR)/(n-1)) : (W/2);
+  const y=v=> H-PB-((v-R0())/SPAN)*(H-PT-PB);
+  let out='';
+
+  for(let t=0;t<=SPAN;t+=180){                     // 3-hour gridlines
+    const v=R0()+t, yy=y(v);
+    out+='<line x1="'+PL+'" y1="'+yy+'" x2="'+(W-PR)+'" y2="'+yy+'" stroke="var(--line)" stroke-width="1"'+
+         (t%360?' stroke-dasharray="3 5"':'')+'/>'+
+         '<text x="'+(PL-5)+'" y="'+(yy+3)+'" font-size="9" fill="var(--faint)" text-anchor="end" '+
+         'font-family="monospace">'+FD.fmtMin(v).replace(':00','')+'</text>';
+  }
+  const mid=ds.findIndex(d=>d.pre!=null||d.deb!=null);
+  [['pre','var(--warn)'],['deb','var(--accent2)']].forEach(([f,col])=>{
+    const vals=ds.map(d=>d[f]);
+    const med=median(vals.filter(v=>v!=null));
+    if(med!=null){
+      out+='<line x1="'+PL+'" y1="'+y(med)+'" x2="'+(W-PR)+'" y2="'+y(med)+'" stroke="'+col+
+           '" stroke-width="1.2" stroke-dasharray="5 5" opacity=".5"/>';
+    }
+    // connect consecutive points, breaking when more than 2 days are missing
+    let seg=[];
+    const flush=()=>{ if(seg.length>1)
+      out+='<polyline points="'+seg.map(p=>p[0]+','+p[1]).join(' ')+'" fill="none" stroke="'+col+
+           '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity=".85"/>'; seg=[]; };
+    let lastI=-99;
+    vals.forEach((v,i)=>{
+      if(v==null) return;
+      if(i-lastI>2) flush();
+      seg.push([x(i).toFixed(1),y(v).toFixed(1)]); lastI=i;
+    });
+    flush();
+    vals.forEach((v,i)=>{ if(v==null) return;
+      out+='<circle cx="'+x(i).toFixed(1)+'" cy="'+y(v).toFixed(1)+'" r="2.8" fill="'+col+'">'+
+           '<title>'+ds[i].key+' · '+(f==='pre'?'started ':'closed ')+FD.fmtMin(v,true)+'</title></circle>';
+    });
+  });
+  const step=Math.max(1,Math.round(n/6));
+  ds.forEach((d,i)=>{ if(i%step) return;
+    out+='<text x="'+x(i).toFixed(1)+'" y="'+(H-6)+'" font-size="9" fill="var(--faint)" text-anchor="middle" '+
+         'font-family="monospace">'+FD.parseKey(d.key).toLocaleDateString(undefined,{month:'numeric',day:'numeric'})+'</text>';
+  });
+  out+='<line x1="'+PL+'" y1="'+(H-PB)+'" x2="'+(W-PR)+'" y2="'+(H-PB)+'" stroke="var(--line2)"/>';
+  document.getElementById('chTimes').innerHTML=out;
+
+  const tp=ds.filter(d=>d.pre!=null).length, td=ds.filter(d=>d.deb!=null).length;
+  document.getElementById('timesCount').textContent=tp+' starts · '+td+' finishes timed';
+}
+
+/* ---------- daily timeline ---------- */
+function drawTimeline(ds){
+  const pos=v=>Math.max(0,Math.min(100,((v-R0())/SPAN)*100));
+  let head='';
+  for(let t=0;t<SPAN;t+=180) head+='<span>'+FD.fmtMin(R0()+t).replace(':00','')+'</span>';
+  let out='<div class="tlhead">'+head+'</div>';
+
+  ds.slice().reverse().forEach(d=>{
+    const dt=FD.parseKey(d.key), wknd=[0,6].includes(dt.getDay());
+    const has=d.pre!=null||d.deb!=null||d.blocks.length||d.breaths.length;
+    let bars='';
+    d.blocks.forEach(b=>{
+      const l=pos(b.start), w=Math.max(0.35,pos(b.end)-l);
+      bars+='<i class="blk" style="left:'+l.toFixed(2)+'%;width:'+w.toFixed(2)+'%"><title>'+
+            FD.fmtMin(b.start,true)+'–'+FD.fmtMin(b.end,true)+' · '+b.mins+' min'+
+            (b.what?' · '+FD.esc(b.what):'')+'</title></i>';
+    });
+    d.breaths.forEach(b=>{
+      const l=pos(b.start), w=Math.max(0.3,pos(b.end||b.start+5)-l);
+      bars+='<i class="br" style="left:'+l.toFixed(2)+'%;width:'+w.toFixed(2)+'%"><title>Breathing · '+
+            b.mins+' min at '+FD.fmtMin(b.start,true)+'</title></i>';
+    });
+    if(d.pre!=null) bars+='<b class="mk pre" style="left:'+pos(d.pre).toFixed(2)+'%"><title>Preflight '+
+                          FD.fmtMin(d.pre,true)+'</title></b>';
+    if(d.deb!=null) bars+='<b class="mk deb" style="left:'+pos(d.deb).toFixed(2)+'%"><title>Debrief '+
+                          FD.fmtMin(d.deb,true)+'</title></b>';
+    out+='<div class="tlrow'+(has?'':' tlempty')+'">'+
+         '<div class="tld'+(wknd?' wknd':'')+'">'+dt.toLocaleDateString(undefined,{weekday:'short',day:'numeric'})+'</div>'+
+         '<div class="tltrack">'+bars+'</div></div>';
+  });
+  document.getElementById('timeline').innerHTML=out;
+}
+
+/* ---------- hour histogram ---------- */
+function drawHours(ds){
+  const buckets=new Array(24).fill(0);
+  ds.forEach(d=>d.blocks.forEach(b=>{
+    for(let m=Math.round(b.start);m<Math.round(b.end);m++){
+      let idx=Math.floor(m/60)-FD.rollover();
+      idx=((idx%24)+24)%24;
+      buckets[idx]++;
+    }
+  }));
+  const W=660,H=200,PL=30,PR=8,PT=10,PB=26;
+  const max=Math.max(1,...buckets), w=(W-PL-PR)/24;
+  let out='';
+  out+='<line x1="'+PL+'" y1="'+(H-PB)+'" x2="'+(W-PR)+'" y2="'+(H-PB)+'" stroke="var(--line2)"/>';
+  buckets.forEach((v,i)=>{
+    const h=(v/max)*(H-PT-PB), clock=(FD.rollover()+i)%24;
+    const lab=(clock%12===0?12:clock%12)+(clock<12?'a':'p');
+    out+='<rect x="'+(PL+i*w+w*0.13)+'" y="'+(H-PB-h)+'" width="'+(w*0.74)+'" height="'+Math.max(v?1.5:0,h)+
+         '" rx="2.5" fill="'+(v?'var(--accent)':'var(--line)')+'"><title>'+lab+' · '+v+' min</title></rect>';
+    if(i%3===0) out+='<text x="'+(PL+i*w+w/2)+'" y="'+(H-9)+'" font-size="9" fill="var(--faint)" '+
+                     'text-anchor="middle" font-family="monospace">'+lab+'</text>';
+  });
+  out+='<text x="'+(PL-4)+'" y="'+(PT+8)+'" font-size="9" fill="var(--faint)" text-anchor="end" '+
+       'font-family="monospace">'+max+'m</text>';
+  document.getElementById('chHours').innerHTML=out;
+
+  const total=buckets.reduce((a,b)=>a+b,0);
+  if(!total){ document.getElementById('hoursNote').textContent=
+    'No timed study blocks in this window yet.'; return; }
+  const best=buckets.indexOf(Math.max(...buckets));
+  const bc=(FD.rollover()+best)%24;
+  // longest run of waking hours with no work at all
+  let run=0,bestRun=0,runEnd=-1;
+  for(let i=0;i<24;i++){
+    const clock=(FD.rollover()+i)%24;
+    if(buckets[i]===0 && clock>=7 && clock<=23){ run++; if(run>bestRun){bestRun=run; runEnd=i;} }
+    else run=0;
+  }
+  let msg='Peak hour is <b>'+((bc%12===0?12:bc%12)+(bc<12?'am':'pm'))+'</b> with '+buckets[best]+
+          ' minutes logged. ';
+  if(bestRun>=3){
+    const s=(FD.rollover()+runEnd-bestRun+1)%24, e=(FD.rollover()+runEnd+1)%24;
+    msg+='Your longest untouched stretch of the waking day runs <b>'+
+         ((s%12===0?12:s%12)+(s<12?'am':'pm'))+'–'+((e%12===0?12:e%12)+(e<12?'am':'pm'))+
+         '</b> ('+bestRun+' hours). That is where the next block goes if you want one.';
+  }
+  document.getElementById('hoursNote').innerHTML=msg;
+}
+
+/* ---------- gaps ---------- */
+function drawGaps(ds){
+  const between=[], latency=[], tail=[], firstBlock=[], lastBlock=[];
+  ds.forEach(d=>{
+    for(let i=1;i<d.blocks.length;i++){
+      const g=d.blocks[i].start-d.blocks[i-1].end;
+      if(g>=0 && g<=1440) between.push(g);
+    }
+    if(d.blocks.length){
+      firstBlock.push(d.blocks[0].start);
+      lastBlock.push(d.blocks[d.blocks.length-1].end);
+      if(d.pre!=null && d.blocks[0].start>=d.pre) latency.push(d.blocks[0].start-d.pre);
+      if(d.deb!=null && d.deb>=d.blocks[d.blocks.length-1].end)
+        tail.push(d.deb-d.blocks[d.blocks.length-1].end);
+    }
+  });
+  const rows=[
+    ['Typical gap between blocks', between.length?dur(median(between)):'—',
+     between.length?between.length+' gaps measured':'Needs 2+ blocks in a day'],
+    ['Longest single gap', between.length?dur(Math.max(...between)):'—','In this window'],
+    ['Preflight → first block', latency.length?dur(median(latency)):'—',
+     'How long the runway actually is'],
+    ['Last block → Debrief', tail.length?dur(median(tail)):'—','Wind-down length'],
+    ['First block typically at', firstBlock.length?FD.fmtMin(median(firstBlock),true):'—',''],
+    ['Last block typically ends', lastBlock.length?FD.fmtMin(median(lastBlock),true):'—','']
+  ];
+  document.getElementById('gaps').innerHTML=rows.map(([l,v,s])=>
+    '<div class="gap"><span class="l">'+l+(s?'<div class="tiny">'+s+'</div>':'')+'</span>'+
+    '<span class="v">'+v+'</span></div>').join('');
+}
+
+/* ---------- drift ---------- */
+function drawDrift(ds){
+  const half=Math.floor(ds.length/2);
+  const a=ds.slice(0,half), b=ds.slice(half);
+  const pick=(arr,f)=>arr.map(d=>d[f]).filter(v=>v!=null);
+  const el=document.getElementById('drift');
+  const parts=[];
+  [['pre','start'],['deb','finish']].forEach(([f,label])=>{
+    const A=pick(a,f), B=pick(b,f);
+    if(A.length<3||B.length<3) return;
+    const d=median(B)-median(A);
+    const dir=Math.abs(d)<10?'held steady':(d>0?'moved '+dur(d)+' later':'moved '+dur(-d)+' earlier');
+    parts.push({label,d,dir,from:median(A),to:median(B)});
+  });
+  if(!parts.length){
+    el.innerHTML='<div class="drift flat">Not enough timed days yet to call a trend. Three or more in each half '+
+      'of the window and this fills in.</div>';
+    return;
+  }
+  const worst=parts.reduce((x,y)=>Math.abs(y.d)>Math.abs(x.d)?y:x);
+  const cls=Math.abs(worst.d)<10?'flat':(worst.d>0?'later':'earlier');
+  el.innerHTML='<div class="drift '+cls+'">'+parts.map(p=>
+    'Your <b>'+p.label+'</b> has '+p.dir+' — '+FD.fmtMin(p.from,true)+' → '+FD.fmtMin(p.to,true)+'.'
+  ).join('<br>')+'</div>';
+}
+
+/* ---------- settings ---------- */
+function paintRollover(){
+  const sel=document.getElementById('rollSel'), cur=FD.rollover();
+  sel.innerHTML=[0,1,2,3,4,5,6,7,8].map(h=>{
+    const lab=h===0?'Midnight — no rollover':((h%12===0?12:h%12)+':00am');
+    return '<option value="'+h+'"'+(h===cur?' selected':'')+'>'+lab+'</option>';
+  }).join('');
+  document.getElementById('rollNote').innerHTML = cur===0
+    ? 'Rollover is <b>off</b>. A Debrief at 1am will close out the new day, not the one that just ended.'
+    : 'Your day runs <b>'+FD.fmtMin(cur*60)+' to '+FD.fmtMin(cur*60)+' the next morning</b>. '+
+      'Right now it is '+FD.fmtMin(FD.dayMinutes())+', which counts as <b>'+
+      FD.parseKey(FD.key()).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})+'</b>.';
+}
+document.getElementById('rollSel').addEventListener('change',e=>{
+  const v=+e.target.value;
+  FD.mutate(s=>{ s.settings=s.settings||{}; s.settings.rollover=v; });
+  FD.reload(); FD.paintNav(); paintRollover(); paint();
+  FD.toast('Day now rolls over at '+(v===0?'midnight':FD.fmtMin(v*60)));
+});
+
+/* ---------- paint ---------- */
+function paint(){
+  const ds=days();
+  const pre=ds.map(d=>d.pre).filter(v=>v!=null);
+  const deb=ds.map(d=>d.deb).filter(v=>v!=null);
+  const spans=ds.filter(d=>d.pre!=null&&d.deb!=null&&d.deb>d.pre).map(d=>d.deb-d.pre);
+
+  document.getElementById('kStart').textContent=pre.length?FD.fmtMin(median(pre),true):'—';
+  document.getElementById('kStartS').textContent=pre.length?pre.length+' of '+RANGE+' days timed':'No Preflights timed yet';
+  document.getElementById('kEnd').textContent=deb.length?FD.fmtMin(median(deb),true):'—';
+  document.getElementById('kEndS').textContent=deb.length?deb.length+' of '+RANGE+' days timed':'No Debriefs timed yet';
+  document.getElementById('kSpan').textContent=spans.length?dur(median(spans)):'—';
+  document.getElementById('kSpanS').textContent=spans.length?spans.length+' complete days':'Needs both ends timed';
+  const sp=spread(pre);
+  document.getElementById('kVar').textContent=sp!=null?'±'+dur(sp):'—';
+  document.getElementById('kVarS').textContent=sp!=null
+    ? (sp<=20?'Very consistent':sp<=45?'Reasonably consistent':'Scattered — worth tightening')
+    : 'Needs 4+ timed starts';
+
+  const any=pre.length||deb.length||ds.some(d=>d.blocks.length);
+  document.getElementById('noData').style.display=any?'none':'block';
+  document.getElementById('rangeNote').textContent='Showing the last '+RANGE+' days';
+
+  drawTimes(ds); drawTimeline(ds); drawHours(ds); drawGaps(ds); drawDrift(ds);
+}
+function paintRange(){
+  document.getElementById('rangeSeg').innerHTML=[14,30,60,90].map(n=>
+    '<button data-n="'+n+'" class="'+(n===RANGE?'on':'')+'">'+n+' days</button>').join('');
+  FD.$$('#rangeSeg button').forEach(b=>b.onclick=()=>{ RANGE=+b.dataset.n; paintRange(); paint(); });
+}
+paintRange(); paintRollover(); paint();
+</script>
+</body>
+</html>

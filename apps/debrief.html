@@ -43,6 +43,8 @@
       making tomorrow morning frictionless.</div>
   </div>
 
+  <div class="note acc" id="dayNote" style="margin-bottom:16px"></div>
+
   <div class="steps" id="steps"></div>
 
   <section class="card">
@@ -175,6 +177,16 @@
 <script src="../assets/core.js?v=1"></script>
 <script>
 const M='debrief', TOTAL=6;
+(function(){
+  const n=document.getElementById('dayNote');
+  const label=FD.parseKey(FD.key()).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+  n.innerHTML = FD.inExtended()
+    ? '<b>It\u2019s '+FD.fmtMin(FD.dayMinutes())+'. This closes out '+label+'</b> — the day that just ended. '+
+      'Your day rolls over at '+FD.rollover()+':00am, so nothing here counts against tomorrow. '+
+      '<a href="rhythm.html">Change the rollover hour →</a>'
+    : 'Closing out <b>'+label+'</b>. If you finish after midnight that\u2019s fine — up until '+
+      FD.rollover()+':00am this still closes today.';
+})();
 const F=['g1','w1','g2','w2','g3','w3','friction','fIf','fThen','compassion','first','firstWhen','firstPrep'];
 let step=0;
 F.forEach(f=>FD.bindField(document.getElementById(f),M,f));
@@ -248,6 +260,8 @@ function summary(){
     (v.firstWhen?'  ·  '+v.firstWhen:'');
   const row=(l,x)=>x?'<div><b>'+l+'</b>'+FD.esc(x)+'</div>':'';
   document.getElementById('summary').innerHTML=
+    (v.at!=null?row('Day closed at',FD.fmtMin(v.at,true)+
+      (p.at!=null?'  ·  '+Math.floor((v.at-p.at)/60)+'h '+((v.at-p.at)%60)+'m after Preflight':'')):'')+
     row('Day rating',(v.rating||'—')+' / 10')+
     row('Focused',(st.minutes||0)+' minutes · '+(FD.day().xp||0)+' XP')+
     row('Went well',[v.g1,v.g2,v.g3].filter(Boolean).join(' · '))+
@@ -258,7 +272,8 @@ document.getElementById('next').onclick=()=>go(step+1);
 document.getElementById('back').onclick=()=>go(step-1);
 document.getElementById('commit').onclick=()=>{
   if(!d().committed){
-    FD.setMod(M,{committed:true,rating:+rate.value});
+    FD.setMod(M,{committed:true, rating:+rate.value,
+                 at:FD.dayMinutes(), atISO:new Date().toISOString()});
     FD.addXP(40,'Day closed'); FD.confetti(34); FD.chime();
   } else FD.toast('Debrief updated');
   summary(); go(6);

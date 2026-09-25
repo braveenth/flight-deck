@@ -28,6 +28,8 @@ const FD = (function(){
      blurb:'Auto scorecard, obstacle analysis, one system change.'},
     {id:'flightplan',name:'Flight Plan',  icon:'🎯', file:'apps/flightplan.html',cadence:'Set once · review weekly',
      blurb:'Your 120-day outcomes and the process targets under them.'},
+    {id:'rhythm',    name:'Rhythm',       icon:'🕰️', file:'apps/rhythm.html',    cadence:'Anytime',
+     blurb:'When you start, when you stop, and the gaps in between.'},
     {id:'recorder',  name:'Flight Recorder',icon:'📈',file:'apps/recorder.html', cadence:'Anytime',
      blurb:'Heatmap, trends, records, and full data export.'},
     {id:'evidence',  name:'Evidence Log', icon:'📚', file:'evidence.html',       cadence:'Reference',
@@ -45,11 +47,48 @@ const FD = (function(){
     urges:[], rules:[], weeks:{}, records:{}, settings:{}
   };
 
-  /* ---------- dates ---------- */
-  function key(d){
+  /* ---------- dates ----------
+     A "logical day" runs from the rollover hour to the same hour next morning,
+     so work and the Debrief done at 1am still belong to the day that just
+     ended. Everything keyed by day — XP, streaks, habits, modules — uses it.
+     key()      : logical day (no argument) or a given Date's calendar day
+     calKey(d)  : always the true calendar day
+  ---------------------------------------------------------------------- */
+  function rollover(){
+    // Read the raw cache directly: read() calls key() during init, so going
+    // back through read() here would recurse.
+    const v = cache && cache.settings && cache.settings.rollover;
+    return (typeof v==='number' && v>=0 && v<=8) ? v : 4;
+  }
+  function calKey(d){
     d = d || new Date();
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
   }
+  function logicalDate(){
+    const n=new Date();
+    if(n.getHours()<rollover()) n.setDate(n.getDate()-1);
+    return n;
+  }
+  function key(d){ return calKey(d||logicalDate()); }
+  // True when the wall clock is past midnight but before the rollover, i.e.
+  // still inside yesterday's logical day.
+  function inExtended(){ return new Date().getHours()<rollover(); }
+  // Minutes since the logical day's midnight. Post-midnight times land in
+  // 1440-1920 so a 1:30am debrief sorts after an 11pm one instead of before.
+  function dayMinutes(at){
+    const n = at ? new Date(at) : new Date();
+    let m = n.getHours()*60 + n.getMinutes();
+    if(n.getHours()<rollover()) m += 1440;
+    return m;
+  }
+  function fmtMin(m,mark){
+    if(m==null||isNaN(m)) return '—';
+    const over=m>=1440, x=((Math.round(m)%1440)+1440)%1440;
+    let h=Math.floor(x/60); const mm=x%60;
+    const ap=h<12?'am':'pm'; let hh=h%12; if(hh===0) hh=12;
+    return hh+':'+String(mm).padStart(2,'0')+ap+(mark&&over?'⁺':'');
+  }
+  function dow(){ return parseKey(key()).getDay(); }
   function parseKey(k){ return new Date(k+'T12:00:00'); }
   function shift(k,n){ const d=parseKey(k); d.setDate(d.getDate()+n); return key(d); }
   function diff(a,b){ return Math.round((parseKey(b)-parseKey(a))/86400000); }
@@ -221,6 +260,11 @@ const FD = (function(){
     const set=(id,v)=>{ const e=document.getElementById(id); if(e) e.textContent=v; };
     set('fd-streak',st); set('fd-level',li.level); set('fd-xp',li.xp.toLocaleString());
     set('fd-today',td); set('fd-dayno',pr.dayNo+'/'+pr.total);
+    const night=document.getElementById('fd-night');
+    if(night){
+      night.style.display = inExtended() ? 'inline-flex' : 'none';
+      set('fd-nightday', 'STILL '+parseKey(key()).toLocaleDateString(undefined,{weekday:'short'}).toUpperCase());
+    }
   }
   function buildNav(){
     const cur=document.body.dataset.module||'';
@@ -234,6 +278,9 @@ const FD = (function(){
           '<span><b>FLIGHT DECK</b><br><span class="mod">'+(me?me.name:'Mission Control')+'</span></span>'+
         '</a>'+
         '<div class="fdchips">'+
+          '<span class="chip night" id="fd-night" style="display:none" '+
+            'title="Past midnight but before your rollover hour — still logging to the day that just ended">'+
+            '◐ <span id="fd-nightday">—</span></span>'+
           '<span class="chip hot" title="Consecutive active days">🔥 <span id="fd-streak">0</span></span>'+
           '<span class="chip lvl" title="Rank level"><small>LVL</small> <span id="fd-level">1</span></span>'+
           '<span class="chip opt" title="Total XP"><span id="fd-xp">0</span> <small>XP</small></span>'+
@@ -329,7 +376,8 @@ const FD = (function(){
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',boot);
   else boot();
 
-  return {MODULES,PROGRAM_DAYS,key,parseKey,shift,diff,weekKey,read,write,mutate,reload,day,mod,setMod,
+  return {MODULES,PROGRAM_DAYS,key,calKey,parseKey,shift,diff,weekKey,read,write,mutate,reload,day,mod,setMod,
+          rollover,inExtended,dayMinutes,fmtMin,dow,logicalDate,
           levelFor,xpForLevel,levelInfo,rankFor,addXP,streak,activeOn,missedYesterday,program,
           toast,confetti,beep,chime,applyTheme,toggleTheme,paintNav,esc,$,$$,uid,pct,lastDays,
           bindField,bindChecks,exportJSON,importJSON,href,root};

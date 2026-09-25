@@ -154,7 +154,7 @@ function saveWeek(patch){
   FD.mutate(s=>{ s.weeks=s.weeks||{}; const k=wkStart(offset);
     s.weeks[k]=Object.assign({},s.weeks[k]||{},patch); });
 }
-function daysElapsed(o){ return o===0 ? (new Date().getDay()+6)%7+1 : 7; }
+function daysElapsed(o){ return o===0 ? (FD.dow()+6)%7+1 : 7; }
 function stats(o,limit){
   const s=FD.read(); let xp=0,min=0,fl=0,rev=0,hb=0,hbP=0,tr=0,trs=0,sl=[],urg=0,urgW=0,act=0,rate=[];
   const hs=(s.habits||[]).filter(h=>!h.archived);
@@ -270,7 +270,7 @@ function paint(){
   F.forEach(f=>{ document.getElementById(f).value=r[f]||''; });
   document.getElementById('commit').textContent=r.committed?'✓ WEEK CLOSED — update':'✓ CLOSE THE WEEK — +60 XP';
 
-  const dow=new Date().getDay();
+  const dow=FD.dow();
   document.getElementById('whenNote').innerHTML = dow===0
     ? '<b>It’s Sunday — this is the day.</b> Twelve minutes now sets the whole of next week.'
     : '<b>This is a Sunday ritual</b>, but reviewing early is better than not reviewing. '+

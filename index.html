@@ -181,7 +181,8 @@
 function refresh(){
   const now=new Date(), h=now.getHours();
   document.getElementById('clock').textContent=
-    now.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase();
+    FD.parseKey(FD.key()).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}).toUpperCase()+
+    (FD.inExtended()?'  ·  STILL LOGGING TO THIS DAY UNTIL '+FD.rollover()+':00AM':'');
 
   const pre=FD.mod('preflight').committed, deb=FD.mod('debrief').committed;
   const g = h<5?'Still up':h<12?'Good morning':h<17?'Good afternoon':h<21?'Good evening':'Winding down';
@@ -189,10 +190,13 @@ function refresh(){
 
   const studyMin=FD.mod('study').minutes||0;
   let hero;
-  if(h>=20 || h<5){
+  const dayLabel=FD.parseKey(FD.key()).toLocaleDateString(undefined,{weekday:'long'});
+  if(h>=20 || FD.inExtended()){
     hero = deb
       ? {k:'Day closed',t:'Debrief is done. Park the plane.',b:'Screens down, room dark and cool. Sleep is when today’s studying is actually written to disk (Rasch & Born, 2013).',bt:'🌙 Reopen Debrief',u:'apps/debrief.html'}
-      : {k:'Last thing tonight',t:'Run the Debrief before bed.',b:'Score the day, write three good things, and choose tomorrow’s first move so the morning has no decision in it.',bt:'🌙 Run Debrief',u:'apps/debrief.html'};
+      : FD.inExtended()
+        ? {k:'Still open',t:dayLabel+' isn’t closed yet.',b:'It’s past midnight, but your day runs to '+FD.rollover()+'am — this still closes out '+dayLabel+'. Five minutes, then sleep.',bt:'🌙 Close '+dayLabel,u:'apps/debrief.html'}
+        : {k:'Last thing tonight',t:'Run the Debrief before bed.',b:'Score the day, write three good things, and choose tomorrow’s first move so the morning has no decision in it.',bt:'🌙 Run Debrief',u:'apps/debrief.html'};
   } else if(!pre && h<12){
     hero = {k:'First thing today',t:'Run Preflight. It takes four minutes.',b:'Name who you’re being today, pick three outcomes, and write an if-then plan for the one obstacle you already know is coming.',bt:'🌅 Run Preflight',u:'apps/preflight.html'};
   } else if(studyMin<25){
@@ -260,10 +264,16 @@ function statusOf(id){
       return u.length?{t:u.filter(x=>x.won).length+'/'+u.length+' urges beaten',on:1}:{t:'No urges logged',on:0};}
     case 'debrief': return m('debrief').committed?{t:'Day closed',on:1}:{t:'Not run',on:0};
     case 'weekly':{const w=FD.read().weeks||{};const wk=FD.weekKey();
-      return w[wk]&&w[wk].committed?{t:'This week reviewed',on:1}:{t:(new Date().getDay()===0?'Due today':'Due Sunday'),on:0,due:new Date().getDay()===0?1:0};}
+      return w[wk]&&w[wk].committed?{t:'This week reviewed',on:1}:{t:(FD.dow()===0?'Due today':'Due Sunday'),on:0,due:FD.dow()===0?1:0};}
     case 'flightplan':{const g=(FD.read().goals||[]).length;return g?{t:g+' goal'+(g===1?'':'s')+' active',on:1}:{t:'Not set',on:0,due:1};}
+    case 'rhythm':{
+      const t=FD.lastDays(30).filter(k=>{
+        const mm=((FD.read().days[k]||{}).mods)||{};
+        return (mm.preflight&&mm.preflight.at!=null)||(mm.debrief&&mm.debrief.at!=null);
+      }).length;
+      return t?{t:t+' days timed',on:-1}:{t:'Awaiting timestamps',on:0};}
     case 'recorder': return {t:'View trends',on:-1};
-    case 'evidence': return {t:'33 citations',on:-1};
+    case 'evidence': return {t:'35 citations',on:-1};
   }
   return {t:'',on:-1};
 }
@@ -279,7 +289,7 @@ const PLAN=[
   {id:'debrief',  lbl:'Debrief — close the day'}
 ];
 function paintPlan(){
-  const sun=new Date().getDay()===0;
+  const sun=FD.dow()===0;
   const rows=PLAN.concat(sun?[{id:'weekly',lbl:'Weekly Debrief — it’s Sunday'}]:[]);
   document.getElementById('plan').innerHTML=rows.map(r=>{
     const st=statusOf(r.id), m=FD.MODULES.find(x=>x.id===r.id);

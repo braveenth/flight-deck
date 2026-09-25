@@ -34,6 +34,8 @@
     <div class="lede">You are not deciding what to do today. You are removing the decisions before they can cost you anything.</div>
   </div>
 
+  <div class="note warn" id="nightNote" style="display:none;margin-bottom:16px"></div>
+
   <div class="steps" id="steps"></div>
 
   <section class="card">
@@ -137,6 +139,7 @@
         <p class="why" style="margin:0 auto">Your first action is below. Do that one thing and the rest of the day
           gets easier, because you'll no longer be negotiating with yourself.</p>
         <div class="note acc" style="margin-top:20px;font-size:16px;font-weight:800" id="firstEcho"></div>
+        <div class="tiny" id="startedAt" style="margin-top:14px"></div>
         <div class="btnrow grid2" style="margin-top:18px">
           <a class="btn primary" href="../apps/study.html" style="text-decoration:none;text-align:center">✈️ Start Study Flight</a>
           <a class="btn" href="../index.html" style="text-decoration:none;text-align:center">← Mission Control</a>
@@ -160,6 +163,13 @@
 <script src="../assets/core.js?v=1"></script>
 <script>
 const M='preflight', TOTAL=6;
+if(FD.inExtended()){
+  const n=document.getElementById('nightNote'); n.style.display='block';
+  n.innerHTML='<b>It\u2019s '+FD.fmtMin(FD.dayMinutes())+' — you\u2019re still inside '+
+    FD.parseKey(FD.key()).toLocaleDateString(undefined,{weekday:'long'})+'.</b> Anything saved here goes to '+
+    'that day. If you\u2019re planning the morning ahead, come back after '+
+    FD.rollover()+':00am, or lower the rollover hour in <a href="rhythm.html">Rhythm</a>.';
+}
 const FIELDS=['identity','o1','o2','o3','wish','outcome','obstacle','planIf','planThen','t1','t2','t3','first'];
 let step=0;
 
@@ -205,13 +215,20 @@ document.getElementById('back').onclick=()=>go(step-1);
 document.getElementById('commit').onclick=()=>{
   const v=d();
   if(!v.o1){ FD.toast('⚠️ Write at least your #1 outcome'); go(2); return; }
-  if(!v.committed){ FD.setMod(M,{committed:true}); FD.addXP(40,'Preflight committed'); FD.confetti(30); FD.chime(); }
+  if(!v.committed){
+    FD.setMod(M,{committed:true, at:FD.dayMinutes(), atISO:new Date().toISOString()});
+    FD.addXP(40,'Preflight committed'); FD.confetti(30); FD.chime();
+  }
   else FD.toast('Flight plan updated');
   echo(); go(6);
 };
 function echo(){
   const v=d();
   document.getElementById('firstEcho').textContent=v.first||v.o1||'Open the thing and give it five minutes.';
+  const st=document.getElementById('startedAt');
+  if(st) st.innerHTML = v.at!=null
+    ? 'Day started at <b>'+FD.fmtMin(v.at,true)+'</b>. <a href="rhythm.html">See how that compares →</a>'
+    : '';
 }
 if(d().committed){ echo(); go(6); } else go(0);
 </script>

@@ -21,6 +21,7 @@
   .logrow:last-child{border:0}
   .logrow .tm{font-family:var(--mono);font-size:11.5px;color:var(--faint);flex:none;width:62px}
   .phase{border-left:2px solid var(--line);padding-left:14px;margin-left:3px}
+  .gaprow{font-size:11px;color:var(--faint);padding:5px 0 5px 72px;font-family:var(--mono);letter-spacing:.04em}
   .phase.active{border-color:var(--accent)}
 </style>
 </head>
@@ -186,6 +187,7 @@
         <div class="kicker">Session log</div>
         <h2>Today's flights</h2>
         <div id="log"><div class="empty">No flights logged yet today.</div></div>
+        <div class="tiny" id="logFoot" style="margin-top:11px"></div>
       </section>
 
       <section class="card">
@@ -227,7 +229,7 @@ boxes.forEach((b,i)=>b.addEventListener('change',()=>{
 ['target','takeaways','tomorrow'].forEach(f=>FD.bindField(document.getElementById(f),M,f));
 
 /* ---------- timer ---------- */
-let total=25*60, left=total, iv=null, running=false, mins=25, mode='READY', fired=false;
+let total=25*60, left=total, iv=null, running=false, mins=25, mode='READY', fired=false, startedAt=null;
 const R=54, C=2*Math.PI*R;
 function draw(){
   const m=String(Math.floor(left/60)).padStart(2,'0'), s=String(left%60).padStart(2,'0');
@@ -238,6 +240,7 @@ function draw(){
 }
 function start(n){
   clearInterval(iv); mins=n; total=n*60; left=total; fired=false; running=true;
+  startedAt=FD.dayMinutes();
   mode = n===5?'BREAK':n>=90?'ULTRADIAN BLOCK':n>=50?'DEEP BLOCK':'FOCUS FLIGHT';
   document.getElementById('tMeta').textContent = n===5
     ? 'Break · stand up, look 20 feet away'
@@ -256,8 +259,10 @@ function land(){
   FD.chime(); FD.confetti(mins>=50?46:26);
   if(mins===5){ FD.addXP(5,'Break taken'); return; }
   const d=FD.mod(M);
+  const endMin=FD.dayMinutes();
   const log=(d.log||[]).concat([{t:new Date().toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'}),
-                                 mins:mins, what:(d.target||'').slice(0,80)}]);
+                                 mins:mins, what:(d.target||'').slice(0,80),
+                                 start:(startedAt!=null?startedAt:Math.max(0,endMin-mins)), end:endMin}]);
   FD.setMod(M,{minutes:(d.minutes||0)+mins, sessions:(d.sessions||0)+1, log:log});
   FD.mutate(s=>{ s.records.totalMinutes=(s.records.totalMinutes||0)+mins;
                  s.records.totalSessions=(s.records.totalSessions||0)+1; });
@@ -315,10 +320,23 @@ function stats(){
 }
 function paintLog(){
   const log=FD.mod(M).log||[];
-  document.getElementById('log').innerHTML = log.length
-    ? log.map(l=>'<div class="logrow"><span class="tm">'+FD.esc(l.t)+'</span>'+
-        '<span><b>'+l.mins+' min</b>'+(l.what?' · '+FD.esc(l.what):'')+'</span></div>').join('')
+  let prevEnd=null, out='';
+  log.forEach(l=>{
+    if(prevEnd!=null && l.start!=null){
+      const gap=l.start-prevEnd;
+      if(gap>=5) out+='<div class="gaprow">↕ '+(gap>=60?Math.floor(gap/60)+'h '+(gap%60)+'m':gap+' min')+' gap</div>';
+    }
+    out+='<div class="logrow"><span class="tm">'+FD.esc(l.t)+'</span>'+
+         '<span><b>'+l.mins+' min</b>'+(l.what?' · '+FD.esc(l.what):'')+'</span></div>';
+    if(l.end!=null) prevEnd=l.end;
+  });
+  document.getElementById('log').innerHTML = log.length ? out
     : '<div class="empty">No flights logged yet today.</div>';
+  const fl=document.getElementById('logFoot');
+  if(fl) fl.innerHTML = log.length
+    ? 'First block '+FD.fmtMin(log[0].start,true)+' · last ended '+FD.fmtMin(log[log.length-1].end,true)+
+      '. <a href="rhythm.html">See your timing over time →</a>'
+    : 'Start times are recorded automatically. <a href="rhythm.html">Rhythm</a> charts them over time.';
 }
 function clearToday(){
   if(!confirm("Clear today's checklist and notes? Your minutes, streak and XP stay.")) return;

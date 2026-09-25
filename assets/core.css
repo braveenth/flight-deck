@@ -289,3 +289,10 @@ a.plain{text-decoration:none}
   *{animation-duration:.01ms!important;transition-duration:.01ms!important}
   html{scroll-behavior:auto}
 }
+
+/* after-midnight indicator */
+.chip.night{
+  border-color:color-mix(in srgb,var(--accent2) 55%,var(--line));
+  background:color-mix(in srgb,var(--accent2) 14%,var(--panel));
+  color:var(--accent2)
+}
