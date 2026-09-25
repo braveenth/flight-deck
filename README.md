@@ -19,6 +19,16 @@ night.
 > Browsers treat `file://` pages inconsistently for storage, and the thirteen
 > apps share one data store. On `http://localhost` it always works.
 
+`serve.command` runs `serve.py`, which sends `Cache-Control: no-store` on every
+response. That matters: a plain `python3 -m http.server` sends no cache headers
+at all, so browsers cache assets heuristically and can keep running stale code
+after an edit — a module added to the nav simply will not appear. With no-store,
+an ordinary reload always picks up changes; no hard-refresh, no version bumping.
+
+The server binds to `127.0.0.1` only, so your logs are not offered to anything
+else on the network. Relaunching `serve.command` restarts an already-running
+Flight Deck server rather than reusing it, so it always serves current code.
+
 ## The modules
 
 | Module | Cadence | What it does |
@@ -88,6 +98,7 @@ review. Clearing site data or switching browsers loses everything.
 index.html            Mission Control
 evidence.html         Citation log
 serve.command         Launcher
+serve.py              Static server: no-store headers, localhost-only
 assets/core.css       Design system
 assets/core.js        Shared engine — storage, XP, streaks, nav, logical day
 apps/*.html           The eleven modules
